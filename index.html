@@ -660,8 +660,8 @@
       indexAxis: 'y',
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#747474' } },
-        y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#747474' } }
+        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
+        y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#414141' } }
       }
     });
 
@@ -749,8 +749,8 @@
     makeChart('chart-source-rating', 'bar', sourceAvgEntries.map(e => e[0]), sourceAvgEntries.map(e => e[1]), {
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#747474' } },
-        y: { grid: { display: false }, min: 0, max: 10, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#747474' } }
+        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
+        y: { grid: { display: false }, min: 0, max: 10, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
       }
     });
 
@@ -800,8 +800,8 @@
     makeChart('chart-ratings', 'bar', Object.keys(b), Object.values(b), {
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { display: false }, title: { display: true, text: 'Rating', color: '#e8e8e8' }, border: { color: '#747474' } },
-        y: { grid: { display: false }, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#747474' } }
+        x: { grid: { display: false }, title: { display: true, text: 'Rating', color: '#e8e8e8' }, border: { color: '#414141' } },
+        y: { grid: { display: false }, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
       }
     });
 
@@ -838,7 +838,7 @@
             grid: { display: false },
             title: { display: true, text: 'Runtime (min)', color: '#a7a7a7' },
             ticks: { color: '#e8e8e8' },
-            border: { color: '#747474' }
+            border: { color: '#414141' }
           },
           y: {
             grid: { display: false },
@@ -850,7 +850,7 @@
               includeBounds: false,
               callback: val => [0,1,2,3,4,5,6,7,8,9,10].includes(val) ? val : ''
             },
-            border: { color: '#747474' }
+            border: { color: '#414141' }
           }
         }
       }
@@ -874,8 +874,8 @@
       {
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { display: false }, ticks: { color: '#e8e8e8', maxRotation: 45 } },
-          y: { grid: { display: false }, ticks: { stepSize: 1, color: '#e8e8e8' } }
+          x: { grid: { display: false }, ticks: { color: '#e8e8e8', maxRotation: 45 }, border: { color: '#414141' } },
+          y: { grid: { display: false }, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
         }
       }
     );
@@ -893,8 +893,8 @@
     makeChart('chart-dayofweek', 'bar', Object.keys(dayCounts), Object.values(dayCounts), {
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { display: false }, ticks: { color: '#e8e8e8' } },
-        y: { grid: { display: false }, ticks: { stepSize: 1, color: '#e8e8e8' } }
+        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
+        y: { grid: { display: false }, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
       }
     });
 
@@ -910,8 +910,8 @@
     makeChart('chart-decade', 'bar', de.map(e => e[0]), de.map(e => e[1]), {
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { display: false }, ticks: { color: '#e8e8e8' } },
-        y: { grid: { display: false }, ticks: { stepSize: 1, color: '#e8e8e8' } }
+        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
+        y: { grid: { display: false }, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
       }
     });
 
@@ -932,8 +932,8 @@
     makeChart('chart-decade-rating', 'bar', decadeAvgEntries.map(e => e[0]), decadeAvgEntries.map(e => e[1]), {
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { display: false }, ticks: { color: '#e8e8e8' } },
-        y: { grid: { display: false }, min: 0, max: 10, ticks: { stepSize: 1, color: '#e8e8e8' } }
+        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
+        y: { grid: { display: false }, min: 0, max: 10, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
       }
     });
 
