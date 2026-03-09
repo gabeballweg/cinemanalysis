@@ -632,21 +632,23 @@
     const rewatches = rows.filter(r => (r[COL.newOrRewatch] || '').toLowerCase().includes('rewatch'));
 
     // ── STATS ──────────────────────────────────────────────
-    const totalMins       = rows.reduce((sum, r) => sum + (parseInt(r[COL.runtime]) || 0), 0);
-    const days            = Math.floor(totalMins / 1440);
-    const hours           = Math.floor((totalMins % 1440) / 60);
-    const mins            = totalMins % 60;
-    const weeksSinceStart = (new Date() - new Date('2026-01-01')) / (1000 * 60 * 60 * 24 * 7);
-    const avgMinsPerWeek  = totalMins / weeksSinceStart;
-    const avgHours        = Math.floor((avgMinsPerWeek % 1440) / 60);
-    const avgMins         = Math.floor(avgMinsPerWeek % 60);
+    const totalMins        = rows.reduce((sum, r) => sum + (parseInt(r[COL.runtime]) || 0), 0);
+    const days             = Math.floor(totalMins / 1440);
+    const hours            = Math.floor((totalMins % 1440) / 60);
+    const mins             = totalMins % 60;
+    const weeksSinceStart  = Math.max(1, (new Date() - new Date('2026-01-01')) / (1000 * 60 * 60 * 24 * 7));
+    const avgMinsPerWeek   = totalMins / weeksSinceStart;
+    const avgWeekHours     = Math.floor((avgMinsPerWeek % 1440) / 60);
+    const avgWeekMins      = Math.floor(avgMinsPerWeek % 60);
 
     document.getElementById('stat-total').textContent     = rows.length;
     document.getElementById('stat-unique').textContent    = new Set(rows.map(r => r[COL.title]).filter(Boolean)).size;
     document.getElementById('stat-avg').textContent       = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : '—';
     document.getElementById('stat-directors').textContent = new Set(rows.map(r => r[COL.director]).filter(Boolean)).size;
     document.getElementById('stat-watchtime').textContent = `${days}d ${hours}h ${mins}m`;
-    document.getElementById('stat-weeklyavg').textContent = `${avgHours}h ${avgMins}m`;
+    console.log('totalMins:', totalMins);
+    console.log('runtime sample:', rows.slice(0,3).map(r => r[COL.runtime]));
+    document.getElementById('stat-weeklyavg').textContent = `${avgWeekHours}h ${avgWeekMins}m`;
 
     // ── MOST WATCHED GENRES (bar) ──────────────────────────
     const gc = {};
@@ -677,20 +679,31 @@
       });
     });
     const topGenres = Object.entries(genreRatings)
+      .filter(([, { count }]) => count >= 3)  
       .map(([name, { total, count }]) => [name, (total / count).toFixed(1)])
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
     makeRankedList('top-genres-list', topGenres, (name, avg) => `${avg} avg`);
 
     // ── HIGHEST RATED DIRECTORS (ranked list) ─────────────
-    const directorRatingMap = {};
+    const directorFilms = {};
     rows.forEach(r => {
       const rating   = parseFloat(r[COL.rating]);
       const director = r[COL.director];
-      if (!rating || !director) return;
-      if (!directorRatingMap[director]) directorRatingMap[director] = { total: 0, count: 0 };
-      directorRatingMap[director].total += rating;
-      directorRatingMap[director].count++;
+      const title    = r[COL.title];
+      if (!rating || !director || !title) return;
+      if (!directorFilms[director]) directorFilms[director] = {};
+      if (!directorFilms[director][title] || rating > directorFilms[director][title]) {
+        directorFilms[director][title] = rating;
+      }
+    });
+    const directorRatingMap = {};
+    Object.entries(directorFilms).forEach(([director, films]) => {
+      const values = Object.values(films);
+      directorRatingMap[director] = {
+        total: values.reduce((a, b) => a + b, 0),
+        count: values.length
+      };
     });
     const topDirectorRatings = Object.entries(directorRatingMap)
       .filter(([, { count }]) => count > 1)
