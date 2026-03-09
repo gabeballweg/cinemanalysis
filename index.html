@@ -62,33 +62,6 @@
       text-transform: uppercase;
     }
 
-    /* ── NAV ──────────────────────────────────────────── */
-    nav {
-      border-bottom: 1px solid var(--border);
-      background: var(--bg);
-      display: flex;
-      justify-content: center;
-    }
-
-    .tab-btn {
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      color: var(--text-muted);
-      font-family: 'Inter', sans-serif;
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      padding: 18px 32px;
-      cursor: pointer;
-    }
-
-    .tab-btn.active {
-      border-bottom-color: var(--text);
-      color: var(--text);
-    }
-
     /* ── LAYOUT ───────────────────────────────────────── */
     main {
       max-width: 1200px;
@@ -184,6 +157,8 @@
       letter-spacing: 2px;
       text-transform: uppercase;
       margin-bottom: 24px;
+      display: flex;
+      align-items: center;
     }
 
     .chart-wrap {
@@ -300,52 +275,65 @@
       color: var(--text);
     }
 
-    /* ── JOURNAL ──────────────────────────────────────── */
-    #page-journal {
-      display: none;
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 64px 24px 80px;
-    }
-
-    .journal-article {
-      margin-bottom: 64px;
-    }
-
-    .journal-date {
-      font-family: 'Inter', sans-serif;
-      font-size: 0.65rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-
-    .journal-title {
-      font-family: 'Inter', sans-serif;
-      font-size: 1.4rem;
-      font-weight: 600;
-      color: var(--highlight);
-      margin-bottom: 16px;
-    }
-
-    .journal-body {
-      font-family: 'Inter', sans-serif;
-      font-weight: 300;
-      color: var(--text);
-      line-height: 1.8;
-      font-size: 0.95rem;
-    }
-
     /* ── RESPONSIVE ───────────────────────────────────── */
     @media (max-width: 600px) {
       .charts-grid { grid-template-columns: 1fr; }
       .stats-grid  { grid-template-columns: repeat(2, 1fr); }
     }
-  </style>
-</head>
-<body>
+
+    /* ── TOOLTIP ──────────────────────────────────────────── */
+    .tooltip-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .tooltip-trigger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1.5px solid var(--text-muted);
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      cursor: default;
+      line-height: 1;
+      text-transform: none;
+      padding-left: 2px;
+      margin-left: 6px;
+    }
+
+    .tooltip-box {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      transform: translateX(-50%);
+      width: 220px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      line-height: 1.6;
+      letter-spacing: 0;
+      text-transform: none;
+      z-index: 100;
+    }
+
+    .tooltip-wrap:hover .tooltip-box {
+      display: block;
+    }
+      </style>
+    </head>
+    <body>
 
   <!-- ── HEADER ─────────────────────────────────────────── -->
   <header>
@@ -353,14 +341,8 @@
     <p class="header-sub">A live dashboard to analyze movie-watching from January 1, 2026 to now</p>
   </header>
 
-  <!-- ── NAV TABS ───────────────────────────────────────── -->
-  <nav>
-    <button class="tab-btn active" id="tab-data"    onclick="switchTab('data')">Data</button>
-    <button class="tab-btn"        id="tab-journal" onclick="switchTab('journal')">Opinion</button>
-  </nav>
-
   <!-- ── DATA PAGE ──────────────────────────────────────── -->
-  <main id="page-data">
+  <main>
 
     <div id="loading"><div class="spinner"></div><br>Developing the film…</div>
     <div id="error-msg">
@@ -408,37 +390,75 @@
         <p class="section-title">Breakdowns</p>
         <div class="charts-grid">
           <div class="chart-card">
-            <p class="chart-title">Most Watched Genres</p>
+            <p class="chart-title">Most Watched Genres
+              <span class="tooltip-wrap">
+                <span class="tooltip-trigger">i</span>
+                <span class="tooltip-box">One movie can account for up to four genres, meaning total genre-watches will be higher than total movies watched.</span>
+              </span>
+            </p>
             <div class="chart-wrap"><canvas id="chart-genre"></canvas></div>
           </div>
+
           <div class="chart-card">
-            <p class="chart-title">Highest Rated Genres</p>
+            <p class="chart-title">Highest Rated Genres
+              <span class="tooltip-wrap">
+                <span class="tooltip-trigger">i</span>
+                <span class="tooltip-box">A genre must be viewed at least 3 times to be included.</span>
+              </span>
+            </p>
             <ol id="top-genres-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
           </div>
+
           <div class="chart-card">
-            <p class="chart-title">Highest Rated Directors</p>
+            <p class="chart-title">Highest Rated Directors
+              <span class="tooltip-wrap">
+                <span class="tooltip-trigger">i</span>
+                <span class="tooltip-box">This card only shows directors who have had two or more of their movies watched.</span>
+              </span>
+            </p>
             <ol id="director-rating-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
           </div>
+
           <div class="chart-card">
-            <p class="chart-title">Watch Count by Source</p>
+            <p class="chart-title">Watch Count by Source
+              <span class="tooltip-wrap">
+                <span class="tooltip-trigger">i</span>
+                <span class="tooltip-box">The source means how or where the movie was watched.</span>
+              </span>
+            </p>
             <div class="chart-wrap"><canvas id="chart-source"></canvas></div>
           </div>
+
           <div class="chart-card">
             <p class="chart-title">Average Rating by Source</p>
             <div class="chart-wrap"><canvas id="chart-source-rating"></canvas></div>
           </div>
+
           <div class="chart-card">
-            <p class="chart-title">Rewatch Percentage</p>
+            <p class="chart-title">Rewatch Percentage
+              <span class="tooltip-wrap">
+                <span class="tooltip-trigger">i</span>
+                <span class="tooltip-box">Percentage of movies watched that you have seen before.</span>
+              </span>
+            </p>
             <div class="chart-wrap"><canvas id="chart-rewatch"></canvas></div>
           </div>
+
           <div class="chart-card">
-            <p class="chart-title">First Watch vs. Rewatch Average Rating</p>
+            <p class="chart-title">Average Rating by Watch Status</p>
             <ol id="rewatch-rating-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
           </div>
+
           <div class="chart-card">
-            <p class="chart-title">Rating Distribution</p>
+            <p class="chart-title">Rating Distribution
+              <span class="tooltip-wrap">
+                <span class="tooltip-trigger">i</span>
+                <span class="tooltip-box">Watch count for each number in the rating scale.</span>
+              </span>
+            </p>
             <div class="chart-wrap"><canvas id="chart-ratings"></canvas></div>
           </div>
+
           <div class="chart-card">
             <p class="chart-title">Runtime vs. Rating</p>
             <div class="chart-wrap"><canvas id="chart-scatter"></canvas></div>
@@ -494,15 +514,6 @@
 
     </div><!-- /#dashboard -->
   </main><!-- /#page-data -->
-
-  <!-- ── OPINION PAGE ────────────────────────────────────── -->
-  <div id="page-journal">
-    <article class="journal-article">
-      <p class="journal-date">March 1, 2026</p>
-      <h2 class="journal-title">Some Editorial Content</h2>
-      <p class="journal-body">Eventually this will be a top five list or something like that.</p>
-    </article>
-  </div>
 
   <!-- ── FOOTER ─────────────────────────────────────────── -->
   <footer>Last refreshed: <span id="last-updated">—</span></footer>
@@ -974,15 +985,6 @@
         <td><span class="rating-badge">${r[COL.rating]}</span></td>`;
       tb.appendChild(tr);
     });
-  }
-
-  // ── TAB SWITCHING ────────────────────────────────────────
-  function switchTab(tab) {
-    const isData = tab === 'data';
-    document.getElementById('page-data').style.display    = isData ? 'block' : 'none';
-    document.getElementById('page-journal').style.display = isData ? 'none' : 'block';
-    document.getElementById('tab-data').classList.toggle('active', isData);
-    document.getElementById('tab-journal').classList.toggle('active', !isData);
   }
 </script>
 </body>
