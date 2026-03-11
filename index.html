@@ -54,17 +54,17 @@
 
     .header-sub {
       font-family: 'Inter', sans-serif;
-      font-weight: 300;
+      font-weight: 400;
       color: var(--text-muted);
       font-size: 0.8rem;
-      margin-top: 12px;
-      letter-spacing: 2px;
+      margin-top: 18px;
+      letter-spacing: none;
       text-transform: uppercase;
     }
 
     /* ── LAYOUT ───────────────────────────────────────── */
     main {
-      max-width: 1200px;
+      max-width: 1300px;
       margin: 0 auto;
       padding: 48px 24px 80px;
       display: flex;
@@ -75,11 +75,11 @@
     /* ── SECTION TITLES ───────────────────────────────── */
     .section-title {
       font-family: 'Inter', sans-serif;
-      font-size: 0.8rem;
+      font-size: 1.3rem;
       font-weight: 600;
       color: var(--text);
-      letter-spacing: 2px;
-      text-transform: uppercase;
+      letter-spacing: none;
+      text-transform: none;
       margin-bottom: 20px;
       margin-top: 40px;
       display: flex;
@@ -113,7 +113,7 @@
 
     .stat-value {
       font-family: 'Inter', sans-serif;
-      font-size: 2.0rem;
+      font-size: 1.8rem;
       font-weight: 900;
       color: var(--highlight);
       line-height: 1;
@@ -121,11 +121,11 @@
 
     .stat-label {
       font-family: 'Inter', sans-serif;
-      font-size: 0.65rem;
+      font-size: 0.8rem;
       font-weight: 500;
       color: var(--text-muted);
-      letter-spacing: 2px;
-      text-transform: uppercase;
+      letter-spacing: none;
+      text-transform: none;
       margin-top: 8px;
     }
 
@@ -151,11 +151,11 @@
 
     .chart-title {
       font-family: 'Inter', sans-serif;
-      font-size: 0.65rem;
+      font-size: 1rem;
       font-weight: 600;
-      color: var(--text-muted);
-      letter-spacing: 2px;
-      text-transform: uppercase;
+      color: var(--text);
+      letter-spacing: none;
+      text-transform: none;
       margin-bottom: 24px;
       display: flex;
       align-items: center;
@@ -295,15 +295,15 @@
       width: 14px;
       height: 14px;
       border-radius: 50%;
-      border: 1.5px solid var(--text-muted);
-      color: var(--text-muted);
+      border: 1.5px solid var(--text);
+      color: var(--text);
       font-family: 'Inter', sans-serif;
       font-size: 0.6rem;
       font-weight: 700;
       cursor: default;
       line-height: 1;
       text-transform: none;
-      padding-left: 2px;
+
       margin-left: 6px;
     }
 
@@ -389,41 +389,51 @@
       <div>
         <p class="section-title">Breakdowns</p>
         <div class="charts-grid">
-          <div class="chart-card">
-            <p class="chart-title">Most Watched Genres
+                    <div class="chart-card">
+            <p class="chart-title">Rating Distribution
               <span class="tooltip-wrap">
-                <span class="tooltip-trigger">i</span>
-                <span class="tooltip-box">One movie can account for up to four genres, meaning total genre-watches will be higher than total movies watched.</span>
+                <span class="tooltip-trigger">?</span>
+                <span class="tooltip-box">Watch count for each number in the rating scale.</span>
               </span>
             </p>
-            <div class="chart-wrap"><canvas id="chart-genre"></canvas></div>
+            <div class="chart-wrap"><canvas id="chart-ratings"></canvas></div>
           </div>
-
+          
           <div class="chart-card">
             <p class="chart-title">Highest Rated Genres
               <span class="tooltip-wrap">
-                <span class="tooltip-trigger">i</span>
-                <span class="tooltip-box">A genre must be viewed at least 3 times to be included.</span>
+                <span class="tooltip-trigger">?</span>
+                <span class="tooltip-box">A genre must be watched at least 3 times to be included. Genres sourced from Letterboxd.</span>
               </span>
             </p>
             <ol id="top-genres-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
           </div>
 
           <div class="chart-card">
+            <p class="chart-title">Most Watched Genres
+              <span class="tooltip-wrap">
+                <span class="tooltip-trigger">?</span>
+                <span class="tooltip-box">One movie can account for up to four genres. Genres sourced from Letterboxd.</span>
+              </span>
+            </p>
+            <div class="chart-wrap"><canvas id="chart-genre"></canvas></div>
+          </div>
+
+          <div class="chart-card">
             <p class="chart-title">Highest Rated Directors
               <span class="tooltip-wrap">
-                <span class="tooltip-trigger">i</span>
-                <span class="tooltip-box">This card only shows directors who have had two or more of their movies watched.</span>
+                <span class="tooltip-trigger">?</span>
+                <span class="tooltip-box">A director must be watched at least 2 times to be included.</span>
               </span>
             </p>
             <ol id="director-rating-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
           </div>
 
           <div class="chart-card">
-            <p class="chart-title">Watch Count by Source
+            <p class="chart-title">Watch Volume by Source
               <span class="tooltip-wrap">
-                <span class="tooltip-trigger">i</span>
-                <span class="tooltip-box">The source means how or where the movie was watched.</span>
+                <span class="tooltip-trigger">?</span>
+                <span class="tooltip-box">Source refers to how or where the movie was watched.</span>
               </span>
             </p>
             <div class="chart-wrap"><canvas id="chart-source"></canvas></div>
@@ -437,8 +447,8 @@
           <div class="chart-card">
             <p class="chart-title">Rewatch Percentage
               <span class="tooltip-wrap">
-                <span class="tooltip-trigger">i</span>
-                <span class="tooltip-box">Percentage of movies watched that you have seen before.</span>
+                <span class="tooltip-trigger">?</span>
+                <span class="tooltip-box">Percentage of movies watched that have been watched at least once before.</span>
               </span>
             </p>
             <div class="chart-wrap"><canvas id="chart-rewatch"></canvas></div>
@@ -447,16 +457,6 @@
           <div class="chart-card">
             <p class="chart-title">Average Rating by Watch Status</p>
             <ol id="rewatch-rating-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
-          </div>
-
-          <div class="chart-card">
-            <p class="chart-title">Rating Distribution
-              <span class="tooltip-wrap">
-                <span class="tooltip-trigger">i</span>
-                <span class="tooltip-box">Watch count for each number in the rating scale.</span>
-              </span>
-            </p>
-            <div class="chart-wrap"><canvas id="chart-ratings"></canvas></div>
           </div>
 
           <div class="chart-card">
@@ -471,15 +471,15 @@
         <p class="section-title">Time Data</p>
         <div class="charts-grid">
           <div class="chart-card wide">
-            <p class="chart-title">Watch Count by Month</p>
+            <p class="chart-title">Watch Volume by Month</p>
             <div class="chart-wrap"><canvas id="chart-timeline"></canvas></div>
           </div>
           <div class="chart-card wide">
-            <p class="chart-title">Watch Count by Day of the Week</p>
+            <p class="chart-title">Watch Volume by Day of the Week</p>
             <div class="chart-wrap"><canvas id="chart-dayofweek"></canvas></div>
           </div>
           <div class="chart-card wide">
-            <p class="chart-title">Watch Count by Release Decade</p>
+            <p class="chart-title">Watch Volume by Release Decade</p>
             <div class="chart-wrap"><canvas id="chart-decade"></canvas></div>
           </div>
           <div class="chart-card wide">
