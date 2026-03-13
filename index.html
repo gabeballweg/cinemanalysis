@@ -6,6 +6,7 @@
   <title>Cinemanalysis</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
 
@@ -333,8 +334,8 @@
     }
       </style>
     </head>
-    <body>
 
+<body>
   <!-- ── HEADER ─────────────────────────────────────────── -->
   <header>
     <h1>Cinemanalysis</h1>
@@ -367,12 +368,8 @@
             <div class="stat-label">Unique Titles Watched</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value" id="stat-avg">—</div>
-            <div class="stat-label">Average Rating</div>
-          </div>
-          <div class="stat-card">
             <div class="stat-value" id="stat-directors">—</div>
-            <div class="stat-label">Unique Directors</div>
+            <div class="stat-label">Directors</div>
           </div>
           <div class="stat-card">
             <div class="stat-value" id="stat-weeklyavg">—</div>
@@ -417,6 +414,16 @@
               </span>
             </p>
             <div class="chart-wrap"><canvas id="chart-genre"></canvas></div>
+          </div>
+
+          <div class="chart-card">
+            <p class="chart-title">Highest Rated Actors</p>
+            <ol id="actor-rating-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
+          </div>
+
+          <div class="chart-card">
+            <p class="chart-title">Most Watched Actors</p>
+            <div class="chart-wrap"><canvas id="chart-actors"></canvas></div>
           </div>
 
           <div class="chart-card">
@@ -530,9 +537,10 @@
     newOrRewatch: "New or Rewatch",
     year:         "Release Year",
     director:     "Director",
-    runtime:      "Runtime",
+    runtime:      "Runtime (minutes)",
     genres:       "Genres (Letterboxd)",
-    rating:       "Rating"
+    rating:       "Rating",
+    stars:        "Stars"
   };
 
   const PALETTE = [
@@ -654,7 +662,6 @@
 
     document.getElementById('stat-total').textContent     = rows.length;
     document.getElementById('stat-unique').textContent    = new Set(rows.map(r => r[COL.title]).filter(Boolean)).size;
-    document.getElementById('stat-avg').textContent       = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : '—';
     document.getElementById('stat-directors').textContent = new Set(rows.map(r => r[COL.director]).filter(Boolean)).size;
     document.getElementById('stat-watchtime').textContent = `${days}d ${hours}h ${mins}m`;
     console.log('totalMins:', totalMins);
@@ -677,6 +684,63 @@
         y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#414141' } }
       }
     });
+
+    // ── MOST WATCHED ACTORS (bar) ─────────────────────────
+    const seenActorTitles = {};
+    rows.forEach(r => {
+      const title = r[COL.title];
+      if (!title) return;
+      (r[COL.stars] || '').split(',').map(a => a.trim()).filter(Boolean).forEach(a => {
+        if (!seenActorTitles[a]) seenActorTitles[a] = new Set();
+        seenActorTitles[a].add(title);
+      });
+    });
+    const ac = {};
+    Object.entries(seenActorTitles).forEach(([actor, titles]) => {
+      ac[actor] = titles.size;
+    });
+    const ae = sortedEntries(Object.fromEntries(Object.entries(ac).filter(([, v]) => v >= 2)), 8);
+    makeChart('chart-actors', 'bar', ae.map(e => e[0]), ae.map(e => e[1]), {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
+        y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#414141' } }
+      }
+    });
+
+    // ── HIGHEST RATED ACTORS (ranked list) ────────────────
+    const actorFilms = {};
+    rows.forEach(r => {
+      const rating = parseFloat(r[COL.rating]);
+      const title  = r[COL.title];
+      if (!rating || !title) return;
+      (r[COL.stars] || '').split(',').map(a => a.trim()).filter(Boolean).forEach(a => {
+        if (!actorFilms[a]) actorFilms[a] = {};
+        if (!actorFilms[a][title] || rating > actorFilms[a][title]) {
+          actorFilms[a][title] = rating;
+        }
+      });
+    });
+    const actorRatingMap = {};
+    Object.entries(actorFilms).forEach(([actor, films]) => {
+      const values = Object.values(films);
+      actorRatingMap[actor] = {
+        total: values.reduce((a, b) => a + b, 0),
+        count: values.length
+      };
+    });
+    const topActorRatings = Object.entries(actorRatingMap)
+      .filter(([, { count }]) => count > 1)
+      .map(([name, { total, count }]) => [name, (total / count).toFixed(1), count])
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+    const actorRatingList = document.getElementById('actor-rating-list');
+    if (topActorRatings.length === 0) {
+      actorRatingList.innerHTML = '<li style="color:var(--text-muted); font-size:0.85rem;">Watch more films with the same actor to see data here.</li>';
+    } else {
+      makeRankedList('actor-rating-list', topActorRatings, (name, avg) => `${avg} avg`);
+    }
 
     // ── HIGHEST RATED GENRES (ranked list) ────────────────
     const genreRatings = {};
@@ -821,8 +885,30 @@
       const k = Math.round(r);
       if (b[k] !== undefined) b[k]++;
     });
+    const avgRating = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null;
     makeChart('chart-ratings', 'bar', Object.keys(b), Object.values(b), {
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+        annotation: {
+          annotations: {
+            avgLine: {
+              type: 'line',
+              xMin: avgRating - 1,
+              xMax: avgRating - 1,
+              borderColor: '#a7a7a7',
+              borderWidth: 1,
+              borderDash: [4, 4],
+              label: {
+                display: true,
+                content: `Avg: ${avgRating.toFixed(1)}`,
+                color: '#a7a7a7',
+                font: { family: "'Inter', sans-serif", size: 10 },
+                position: 'start'
+              }
+            }
+          }
+        }
+      },
       scales: {
         x: { grid: { display: false }, title: { display: true, text: 'Rating', color: '#e8e8e8' }, border: { color: '#414141' } },
         y: { grid: { display: false }, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
