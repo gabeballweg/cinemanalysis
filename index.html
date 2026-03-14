@@ -148,6 +148,11 @@
 
     .chart-card.wide {
       grid-column: 1 / -1;
+      overflow-x: auto;
+    }
+
+    .chart-card.wide .chart-wrap {
+    min-width: 500px;
     }
 
     .chart-title {
@@ -264,10 +269,10 @@
       text-align: center;
       padding: 24px;
       font-family: 'Inter', sans-serif;
-      font-weight: 300;
+      font-weight: 500;
       color: var(--text-muted);
       font-size: 0.72rem;
-      letter-spacing: 2px;
+      letter-spacing: 0px;
       text-transform: uppercase;
       border-top: 1px solid var(--border);
     }
@@ -332,6 +337,10 @@
     .tooltip-wrap:hover .tooltip-box {
       display: block;
     }
+
+    .chart-wrap.tall {
+      height: 500px;
+    }
       </style>
     </head>
 
@@ -339,7 +348,7 @@
   <!-- ── HEADER ─────────────────────────────────────────── -->
   <header>
     <h1>Cinemanalysis</h1>
-    <p class="header-sub">A live dashboard to analyze movie-watching from January 1, 2026 to now</p>
+    <p class="header-sub">A live dashboard to visualize movie-watching data from January 1, 2026 to now</p>
   </header>
 
   <!-- ── DATA PAGE ──────────────────────────────────────── -->
@@ -364,16 +373,12 @@
             <div class="stat-label">Total Movies Watched</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value" id="stat-unique">—</div>
-            <div class="stat-label">Unique Titles Watched</div>
-          </div>
-          <div class="stat-card">
             <div class="stat-value" id="stat-directors">—</div>
-            <div class="stat-label">Directors</div>
+            <div class="stat-label">Total Directors Watched</div>
           </div>
           <div class="stat-card">
             <div class="stat-value" id="stat-weeklyavg">—</div>
-            <div class="stat-label">Avg Watch Time per Week</div>
+            <div class="stat-label">Average Watch Time per Week</div>
           </div>
           <div class="stat-card">
             <div class="stat-value" id="stat-watchtime">—</div>
@@ -382,11 +387,11 @@
         </div>
       </div>
 
-      <!-- BREAKDOWNS -->
+      <!-- RATINGS -->
       <div>
-        <p class="section-title">Breakdowns</p>
+        <p class="section-title">Ratings Data</p>
         <div class="charts-grid">
-                    <div class="chart-card">
+          <div class="chart-card wide">
             <p class="chart-title">Rating Distribution
               <span class="tooltip-wrap">
                 <span class="tooltip-trigger">?</span>
@@ -395,7 +400,30 @@
             </p>
             <div class="chart-wrap"><canvas id="chart-ratings"></canvas></div>
           </div>
-          
+          <div class="chart-card wide">
+            <p class="chart-title">Runtime vs. Rating</p>
+            <div class="chart-wrap"><canvas id="chart-scatter"></canvas></div>
+          </div>
+          <div class="chart-card wide">
+            <p class="chart-title">Average Rating by Release Decade</p>
+            <div class="chart-wrap"><canvas id="chart-decade-rating"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GENRES -->
+      <div>
+        <p class="section-title">Genre Data</p>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <p class="chart-title">Most Watched Genres
+              <span class="tooltip-wrap">
+                <span class="tooltip-trigger">?</span>
+                <span class="tooltip-box">One movie can account for up to four genres. Genres sourced from Letterboxd.</span>
+              </span>
+            </p>
+            <div class="chart-wrap tall"><canvas id="chart-genre"></canvas></div>
+          </div>
           <div class="chart-card">
             <p class="chart-title">Highest Rated Genres
               <span class="tooltip-wrap">
@@ -405,27 +433,17 @@
             </p>
             <ol id="top-genres-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
           </div>
+        </div>
+      </div>
 
+      <!-- DIRECTORS -->
+      <div>
+        <p class="section-title">Director Data</p>
+        <div class="charts-grid">
           <div class="chart-card">
-            <p class="chart-title">Most Watched Genres
-              <span class="tooltip-wrap">
-                <span class="tooltip-trigger">?</span>
-                <span class="tooltip-box">One movie can account for up to four genres. Genres sourced from Letterboxd.</span>
-              </span>
-            </p>
-            <div class="chart-wrap"><canvas id="chart-genre"></canvas></div>
+            <p class="chart-title">Most Watched Directors</p>
+            <div class="chart-wrap"><canvas id="chart-directors"></canvas></div>
           </div>
-
-          <div class="chart-card">
-            <p class="chart-title">Highest Rated Actors</p>
-            <ol id="actor-rating-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
-          </div>
-
-          <div class="chart-card">
-            <p class="chart-title">Most Watched Actors</p>
-            <div class="chart-wrap"><canvas id="chart-actors"></canvas></div>
-          </div>
-
           <div class="chart-card">
             <p class="chart-title">Highest Rated Directors
               <span class="tooltip-wrap">
@@ -435,7 +453,38 @@
             </p>
             <ol id="director-rating-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
           </div>
+        </div>
+      </div>
 
+      <!-- ACTORS -->
+      <div>
+        <p class="section-title">Actor Data</p>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <p class="chart-title">Most Watched Actors
+                <span class="tooltip-wrap">
+                <span class="tooltip-trigger">?</span>
+                <span class="tooltip-box">The top 2-4 star actors are included for each movie. Sourced from IMDb.</span>
+              </span>
+            </p>
+            <div class="chart-wrap tall"><canvas id="chart-actors"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <p class="chart-title">Highest Rated Actors
+                <span class="tooltip-wrap">
+                <span class="tooltip-trigger">?</span>
+                <span class="tooltip-box">The top 2-4 star actors are included for each movie. Sourced from IMDb.</span>
+              </span>
+            </p>
+            <ol id="actor-rating-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- SOURCES -->
+      <div>
+        <p class="section-title">Source Data</p>
+        <div class="charts-grid">
           <div class="chart-card">
             <p class="chart-title">Watch Volume by Source
               <span class="tooltip-wrap">
@@ -445,12 +494,17 @@
             </p>
             <div class="chart-wrap"><canvas id="chart-source"></canvas></div>
           </div>
-
           <div class="chart-card">
             <p class="chart-title">Average Rating by Source</p>
             <div class="chart-wrap"><canvas id="chart-source-rating"></canvas></div>
           </div>
+        </div>
+      </div>
 
+      <!-- WATCH STATUS -->
+      <div>
+        <p class="section-title">Watch Status Data</p>
+        <div class="charts-grid">
           <div class="chart-card">
             <p class="chart-title">Rewatch Percentage
               <span class="tooltip-wrap">
@@ -460,22 +514,16 @@
             </p>
             <div class="chart-wrap"><canvas id="chart-rewatch"></canvas></div>
           </div>
-
           <div class="chart-card">
             <p class="chart-title">Average Rating by Watch Status</p>
             <ol id="rewatch-rating-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
           </div>
-
-          <div class="chart-card">
-            <p class="chart-title">Runtime vs. Rating</p>
-            <div class="chart-wrap"><canvas id="chart-scatter"></canvas></div>
-          </div>
         </div>
       </div>
 
-      <!-- TIME DATA -->
+      <!-- WATCH VOLUME DATA -->
       <div>
-        <p class="section-title">Time Data</p>
+        <p class="section-title">Watch Volume Data</p>
         <div class="charts-grid">
           <div class="chart-card wide">
             <p class="chart-title">Watch Volume by Month</p>
@@ -488,10 +536,6 @@
           <div class="chart-card wide">
             <p class="chart-title">Watch Volume by Release Decade</p>
             <div class="chart-wrap"><canvas id="chart-decade"></canvas></div>
-          </div>
-          <div class="chart-card wide">
-            <p class="chart-title">Average Rating by Release Decade</p>
-            <div class="chart-wrap"><canvas id="chart-decade-rating"></canvas></div>
           </div>
         </div>
       </div>
@@ -661,7 +705,6 @@
     const avgWeekMins      = Math.floor(avgMinsPerWeek % 60);
 
     document.getElementById('stat-total').textContent     = rows.length;
-    document.getElementById('stat-unique').textContent    = new Set(rows.map(r => r[COL.title]).filter(Boolean)).size;
     document.getElementById('stat-directors').textContent = new Set(rows.map(r => r[COL.director]).filter(Boolean)).size;
     document.getElementById('stat-watchtime').textContent = `${days}d ${hours}h ${mins}m`;
     console.log('totalMins:', totalMins);
@@ -734,7 +777,7 @@
       .filter(([, { count }]) => count > 1)
       .map(([name, { total, count }]) => [name, (total / count).toFixed(1), count])
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+      .slice(0, 10);
     const actorRatingList = document.getElementById('actor-rating-list');
     if (topActorRatings.length === 0) {
       actorRatingList.innerHTML = '<li style="color:var(--text-muted); font-size:0.85rem;">Watch more films with the same actor to see data here.</li>';
@@ -757,8 +800,31 @@
       .filter(([, { count }]) => count >= 3)  
       .map(([name, { total, count }]) => [name, (total / count).toFixed(1)])
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+      .slice(0, 10);
     makeRankedList('top-genres-list', topGenres, (name, avg) => `${avg} avg`);
+
+    // ── MOST WATCHED DIRECTORS (bar) ─────────────────────
+    const seenDirectorTitles = {};
+    rows.forEach(r => {
+      const title    = r[COL.title];
+      const director = r[COL.director];
+      if (!title || !director) return;
+      if (!seenDirectorTitles[director]) seenDirectorTitles[director] = new Set();
+      seenDirectorTitles[director].add(title);
+    });
+    const dc2 = {};
+    Object.entries(seenDirectorTitles).forEach(([director, titles]) => {
+      dc2[director] = titles.size;
+    });
+    const de2 = sortedEntries(Object.fromEntries(Object.entries(dc2).filter(([, v]) => v >= 2)), 8);
+    makeChart('chart-directors', 'bar', de2.map(e => e[0]), de2.map(e => e[1]), {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
+        y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#414141' } }
+      }
+    });
 
     // ── HIGHEST RATED DIRECTORS (ranked list) ─────────────
     const directorFilms = {};
@@ -789,7 +855,7 @@
     if (topDirectorRatings.length === 0) {
       directorRatingList.innerHTML = '<li style="color:var(--text-muted); font-size:0.85rem;">Watch more films by the same director to see data here.</li>';
     } else {
-      makeRankedList('director-rating-list', topDirectorRatings, (name, avg, count) => `${avg} avg · ${count} films`);
+      makeRankedList('director-rating-list', topDirectorRatings, (name, avg) => `${avg} avg`);
     }
 
     // ── WATCH COUNT BY SOURCE (doughnut) ──────────────────
@@ -1058,7 +1124,7 @@
         seenTitles.add(r[COL.title]);
         return true;
       })
-      .slice(0, 10);
+      .slice(0, 15);
     dedupedFirstWatches.forEach((r, i) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
