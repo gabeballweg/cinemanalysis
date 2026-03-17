@@ -584,7 +584,7 @@
     runtime:      "Runtime (minutes)",
     genres:       "Genres (Letterboxd)",
     rating:       "Rating",
-    stars:        "Stars"
+    actors:       "Actors"
   };
 
   const PALETTE = [
@@ -733,7 +733,7 @@
     rows.forEach(r => {
       const title = r[COL.title];
       if (!title) return;
-      (r[COL.stars] || '').split(',').map(a => a.trim()).filter(Boolean).forEach(a => {
+      (r[COL.actors] || '').split(',').map(a => a.trim()).filter(Boolean).forEach(a => {
         if (!seenActorTitles[a]) seenActorTitles[a] = new Set();
         seenActorTitles[a].add(title);
       });
@@ -758,7 +758,7 @@
       const rating = parseFloat(r[COL.rating]);
       const title  = r[COL.title];
       if (!rating || !title) return;
-      (r[COL.stars] || '').split(',').map(a => a.trim()).filter(Boolean).forEach(a => {
+      (r[COL.actors] || '').split(',').map(a => a.trim()).filter(Boolean).forEach(a => {
         if (!actorFilms[a]) actorFilms[a] = {};
         if (!actorFilms[a][title] || rating > actorFilms[a][title]) {
           actorFilms[a][title] = rating;
