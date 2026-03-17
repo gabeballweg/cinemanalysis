@@ -45,6 +45,7 @@
       font-size: clamp(2.4rem, 6vw, 4rem);
       color: var(--highlight);
       font-weight: 600;
+      letter-spacing: -5px;
       line-height: 1.1;
     }
 
@@ -102,8 +103,8 @@
       gap: 1px;
       background: var(--border);
       border: 1px solid var(--border);
-      border-radius: 4px;
-      overflow: hidden;
+
+      overflow: visible;
     }
 
     .stat-card {
@@ -137,7 +138,6 @@
       gap: 1px;
       background: var(--border);
       border: 1px solid var(--border);
-      border-radius: 4px;
       overflow: hidden;
     }
 
@@ -331,6 +331,7 @@
       line-height: 1.6;
       letter-spacing: 0;
       text-transform: none;
+      text-align: left;
       z-index: 100;
     }
 
@@ -352,7 +353,7 @@
   <!-- ── HEADER ─────────────────────────────────────────── -->
   <header>
     <h1>Cinemanalysis</h1>
-    <p class="header-sub">A live dashboard to visualize movie-watching data from January 1, 2026 to now</p>
+    <p class="header-sub">A live dashboard to visualize 2026 movie-watching data</p>
   </header>
 
   <!-- ── DATA PAGE ──────────────────────────────────────── -->
@@ -382,11 +383,29 @@
           </div>
           <div class="stat-card">
             <div class="stat-value" id="stat-weeklyavg">—</div>
-            <div class="stat-label">Average Watch Time per Week</div>
+            <div class="stat-label">Average Movies per Week</div>
           </div>
           <div class="stat-card">
             <div class="stat-value" id="stat-watchtime">—</div>
             <div class="stat-label">Total Watch Time</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-watchage">—</div>
+            <div class="stat-label">Movie Watching Age
+              <span class="tooltip-wrap">
+                <span class="tooltip-trigger">?</span>
+                <span class="tooltip-box">An expression of how old your taste in movies would suggest you are. It weighs the release years of movies you watched against your ratings.</span>
+              </span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-streak">—</div>
+            <div class="stat-label">Longest Streak
+              <span class="tooltip-wrap">
+                <span class="tooltip-trigger">?</span>
+                <span class="tooltip-box" id="tooltip-streak">—</span>
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -486,7 +505,7 @@
         <p class="section-title">Watch Status Data</p>
         <div class="charts-grid">
           <div class="chart-card">
-            <p class="chart-title">Rewatch Percentage
+            <p class="chart-title">Rewatch Rate
               <span class="tooltip-wrap">
                 <span class="tooltip-trigger">?</span>
                 <span class="tooltip-box">Percentage of movies watched that have been watched at least once before.</span>
@@ -708,16 +727,53 @@
     const hours            = Math.floor((totalMins % 1440) / 60);
     const mins             = totalMins % 60;
     const weeksSinceStart  = Math.max(1, (new Date() - new Date('2026-01-01')) / (1000 * 60 * 60 * 24 * 7));
-    const avgMinsPerWeek   = totalMins / weeksSinceStart;
-    const avgWeekHours     = Math.floor((avgMinsPerWeek % 1440) / 60);
-    const avgWeekMins      = Math.floor(avgMinsPerWeek % 60);
 
     document.getElementById('stat-total').textContent     = rows.length;
     document.getElementById('stat-directors').textContent = new Set(rows.map(r => r[COL.director]).filter(Boolean)).size;
     document.getElementById('stat-watchtime').textContent = `${days}d ${hours}h ${mins}m`;
     console.log('totalMins:', totalMins);
     console.log('runtime sample:', rows.slice(0,3).map(r => r[COL.runtime]));
-    document.getElementById('stat-weeklyavg').textContent = `${avgWeekHours}h ${avgWeekMins}m`;
+    document.getElementById('stat-weeklyavg').textContent = (rows.length / weeksSinceStart).toFixed(1);
+    const watchAgeData = rows.filter(r => r[COL.year] && r[COL.rating] && !isNaN(parseInt(r[COL.year])) && !isNaN(parseFloat(r[COL.rating])));
+    const watchAgeWeightedSum = watchAgeData.reduce((sum, r) => sum + (2046 - parseInt(r[COL.year])) * parseFloat(r[COL.rating]), 0);
+    const watchAgeRatingSum   = watchAgeData.reduce((sum, r) => sum + parseFloat(r[COL.rating]), 0);
+    const watchAge            = watchAgeRatingSum > 0 ? Math.round(watchAgeWeightedSum / watchAgeRatingSum) : null;
+    document.getElementById('stat-watchage').textContent = watchAge !== null ? `${watchAge}` : '—';
+    const watchDates = [...new Set(
+      rows
+        .map(r => r[COL.dateWatched] || r[COL.timestamp] || '')
+        .filter(Boolean)
+        .map(raw => {
+          const d = new Date(raw);
+          return isNaN(d) ? null : d.toISOString().slice(0, 10);
+        })
+        .filter(Boolean)
+    )].sort();
+
+    let longestStreak = 1, currentStreak = 1;
+    let longestStart  = watchDates[0], longestEnd = watchDates[0];
+    let currentStart  = watchDates[0];
+
+    for (let i = 1; i < watchDates.length; i++) {
+      const prev = new Date(watchDates[i - 1]);
+      const curr = new Date(watchDates[i]);
+      const diff = (curr - prev) / (1000 * 60 * 60 * 24);
+      if (diff === 1) {
+        currentStreak++;
+        if (currentStreak > longestStreak) {
+          longestStreak = currentStreak;
+          longestStart  = currentStart;
+          longestEnd    = watchDates[i];
+        }
+      } else {
+        currentStreak = 1;
+        currentStart  = watchDates[i];
+      }
+    }
+
+const formatDate = d => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+document.getElementById('stat-streak').textContent = watchDates.length ? `${longestStreak} days` : '—';
+document.getElementById('tooltip-streak').textContent = watchDates.length ? `${formatDate(longestStart)} — ${formatDate(longestEnd)}` : '—';
 
     // ── MOST WATCHED GENRES (bar) ──────────────────────────
     const gc = {};
