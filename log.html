@@ -213,10 +213,40 @@
     footer a:hover {
       color: var(--text);
     }
+
+    #password-gate input:focus {
+    border-color: var(--text-muted);
+    }
   </style>
 </head>
 <body>
-
+  <!-- ── PASSWORD GATE ──────────────────────────────────────── -->
+  <div id="password-gate" style="
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 9999;
+    ">
+      <p style="font-family:'Inter',sans-serif; font-size:0.7rem; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--text-muted);">Enter Password</p>
+      <input type="password" id="password-input" style="
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        color: var(--text);
+        font-family: 'Inter', sans-serif;
+        font-size: 0.95rem;
+        padding: 12px 16px;
+        width: 280px;
+        outline: none;
+        text-align: center;
+      " placeholder="Password" />
+      <p id="password-error" style="font-family:'Inter',sans-serif; font-size:0.75rem; color:#c04444; display:none;">Incorrect password.</p>
+    </div>
   <header>
     <h1>Log a Movie</h1>
     <p class="header-sub">Add a new entry to Cinemanalysis</p>
@@ -307,6 +337,27 @@
   </footer>
 
 <script>
+  // ── AUTH ─────────────────────────────────────────────────
+  const PASSWORD = "royalewithcheese";
+
+  document.getElementById('password-input').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    if (this.value === PASSWORD) {
+      const gate = document.getElementById('password-gate');
+      gate.style.transition = 'opacity 0.3s';
+      gate.style.opacity = '0';
+      setTimeout(() => gate.remove(), 300);
+    } else {
+      document.getElementById('password-error').style.display = 'block';
+      this.value = '';
+      this.focus();
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('password-input').focus();
+  });
+
   // ── CONFIG ──────────────────────────────────────────────
   const TMDB_TOKEN   = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhOTUyOWFjOGQzMjNkMWU1NzMwMWQxOTNmNWJiMDllNCIsIm5iZiI6MTc3Mzc2NDg1NC4yMiwic3ViIjoiNjliOTgwZjY0OGEzZGU3YTU4MmM4Yzk3Iiwic2NvcGVzIjpbImFwaV9yZWFkIl0sInZlcnNpb24iOjF9.hwEoVAl5hAFMfKAlMZMc9GQlNPs1OrS-rUX3ZMZeE9o";
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw_A4l-eQvDyb4PZIXIejaTfHp2Or8dtFfuiVilLL3HZc1pjSPtAALCarMBSxOnBC7j/exec";
