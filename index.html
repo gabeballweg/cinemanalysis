@@ -415,17 +415,29 @@
         <p class="section-title">Genre Data</p>
         <div class="charts-grid">
           <div class="chart-card">
-            <p class="chart-title">Most Watched Genres by Count
-              <span class="tooltip-wrap">
-                <span class="tooltip-trigger">?</span>
-                <span class="tooltip-box">One movie can have multiple genres. Genre data sourced from TMDB.</span>
+            <p class="chart-title" style="justify-content:space-between;">
+              <span style="display:inline-flex; align-items:center;">Most Watched Genres
+                <span class="tooltip-wrap">
+                  <span class="tooltip-trigger">?</span>
+                  <span class="tooltip-box">One movie can account for multiple genres. Genres sourced from TMDB.</span>
+                </span>
+              </span>
+              <span style="display:flex; gap:0;">
+                <button id="genre-toggle-count" onclick="toggleGenreChart('count')" style="
+                  background: var(--text); color: var(--bg);
+                  border: none; border-radius: 4px 0 0 4px;
+                  font-family: 'Inter', sans-serif; font-size: 0.6rem;
+                  font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+                  padding: 4px 10px; cursor: pointer;">By Watches</button>
+                <button id="genre-toggle-runtime" onclick="toggleGenreChart('runtime')" style="
+                  background: var(--surface2); color: var(--text-muted);
+                  border: none; border-radius: 0 4px 4px 0;
+                  font-family: 'Inter', sans-serif; font-size: 0.6rem;
+                  font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+                  padding: 4px 10px; cursor: pointer;">By Runtime</button>
               </span>
             </p>
-            <div class="chart-wrap tall"><canvas id="chart-genre"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <p class="chart-title">Most Watched Genres by Time</p>
-            <div class="chart-wrap tall"><canvas id="chart-genre-runtime"></canvas></div>
+            <div class="chart-wrap tall"><canvas id="chart-genre-combined"></canvas></div>
           </div>
           <div class="chart-card">
             <p class="chart-title">Highest Rated Genres
@@ -444,12 +456,29 @@
         <p class="section-title">Director Data</p>
         <div class="charts-grid">
           <div class="chart-card">
-            <p class="chart-title">Most Watched Directors by Count</p>
-            <div class="chart-wrap"><canvas id="chart-directors"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <p class="chart-title">Most Watched Directors by Time</p>
-            <div class="chart-wrap"><canvas id="chart-directors-runtime"></canvas></div>
+            <p class="chart-title" style="justify-content:space-between;">
+              <span style="display:inline-flex; align-items:center;">Most Watched Directors
+                <span class="tooltip-wrap">
+                  <span class="tooltip-trigger">?</span>
+                  <span class="tooltip-box">A director must have at least 2 films to appear. Rewatches of the same film are deduplicated for count, but included for runtime.</span>
+                </span>
+              </span>
+              <span style="display:flex; gap:0;">
+                <button id="director-toggle-count" onclick="toggleDirectorChart('count')" style="
+                  background: var(--text); color: var(--bg);
+                  border: none; border-radius: 4px 0 0 4px;
+                  font-family: 'Inter', sans-serif; font-size: 0.6rem;
+                  font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+                  padding: 4px 10px; cursor: pointer;">By Watches</button>
+                <button id="director-toggle-runtime" onclick="toggleDirectorChart('runtime')" style="
+                  background: var(--surface2); color: var(--text-muted);
+                  border: none; border-radius: 0 4px 4px 0;
+                  font-family: 'Inter', sans-serif; font-size: 0.6rem;
+                  font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+                  padding: 4px 10px; cursor: pointer;">By Runtime</button>
+              </span>
+            </p>
+            <div class="chart-wrap tall"><canvas id="chart-directors-combined"></canvas></div>
           </div>
           <div class="chart-card">
             <p class="chart-title">Highest Rated Directors
@@ -468,13 +497,29 @@
         <p class="section-title">Actor Data</p>
         <div class="charts-grid">
           <div class="chart-card">
-            <p class="chart-title">Most Watched Actors
+            <p class="chart-title" style="justify-content:space-between;">
+              <span style="display:inline-flex; align-items:center;">Most Watched Actors
                 <span class="tooltip-wrap">
-                <span class="tooltip-trigger">?</span>
-                <span class="tooltip-box">The first ten billed actors for each movie are counted. Actor data sourced from TMDB.</span>
+                  <span class="tooltip-trigger">?</span>
+                  <span class="tooltip-box">The first ten billed actors for each movie are counted. Actor data sourced from TMDB.</span>
+                </span>
+              </span>
+              <span style="display:flex; gap:0;">
+                <button id="actor-toggle-count" onclick="toggleActorChart('count')" style="
+                  background: var(--text); color: var(--bg);
+                  border: none; border-radius: 4px 0 0 4px;
+                  font-family: 'Inter', sans-serif; font-size: 0.6rem;
+                  font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+                  padding: 4px 10px; cursor: pointer;">By Watches</button>
+                <button id="actor-toggle-runtime" onclick="toggleActorChart('runtime')" style="
+                  background: var(--surface2); color: var(--text-muted);
+                  border: none; border-radius: 0 4px 4px 0;
+                  font-family: 'Inter', sans-serif; font-size: 0.6rem;
+                  font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+                  padding: 4px 10px; cursor: pointer;">By Runtime</button>
               </span>
             </p>
-            <div class="chart-wrap tall"><canvas id="chart-actors"></canvas></div>
+            <div class="chart-wrap tall"><canvas id="chart-actors-combined"></canvas></div>
           </div>
           <div class="chart-card">
             <p class="chart-title">Highest Rated Actors
@@ -783,24 +828,14 @@ const formatDate = d => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { 
 document.getElementById('stat-streak').textContent = watchDates.length ? `${longestStreak} days` : '—';
 document.getElementById('tooltip-streak').textContent = watchDates.length ? `${formatDate(longestStart)} — ${formatDate(longestEnd)}` : '—';
 
-    // ── MOST WATCHED GENRES (bar) ──────────────────────────
+    // ── MOST WATCHED GENRES — COMBINED (bar) ──────────────────
     const gc = {};
     rows.forEach(r =>
       (r[COL.genres] || '').split(',').map(g => g.trim()).filter(Boolean).forEach(g => {
         gc[g] = (gc[g] || 0) + 1;
       })
     );
-    const ge = sortedEntries(gc, 8);
-    makeChart('chart-genre', 'bar', ge.map(e => e[0]), ge.map(e => e[1]), {
-      indexAxis: 'y',
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
-        y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#414141' } }
-      }
-    });
 
-    // ── MOST WATCHED GENRES BY RUNTIME (bar) ─────────────────
     const genreRuntime = {};
     rows.forEach(r => {
       const runtime = parseInt(r[COL.runtime]);
@@ -809,36 +844,75 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
         genreRuntime[g] = (genreRuntime[g] || 0) + runtime;
       });
     });
-    const gre = sortedEntries(genreRuntime, 8);
-    makeChart('chart-genre-runtime', 'bar', gre.map(e => e[0]), gre.map(e => e[1]), {
-      indexAxis: 'y',
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => {
-              const totalMins = ctx.raw;
-              const h = Math.floor(totalMins / 60);
-              const m = totalMins % 60;
-              return ` ${h}h ${m}m`;
+
+    const geCount   = sortedEntries(gc, 10);
+    const geRuntime = sortedEntries(genreRuntime, 10);
+
+    const genreChartData = {
+      count: {
+        labels: geCount.map(e => e[0]),
+        data:   geCount.map(e => e[1])
+      },
+      runtime: {
+        labels: geRuntime.map(e => e[0]),
+        data:   geRuntime.map(e => e[1])
+      }
+    };
+
+    const genreChart = new Chart(document.getElementById('chart-genre-combined'), {
+      type: 'bar',
+      data: {
+        labels: genreChartData.count.labels,
+        datasets: [{
+          data: genreChartData.count.data,
+          backgroundColor: PALETTE.slice(0, genreChartData.count.labels.length),
+          borderWidth: 0,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        ...baseOpts,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.raw} films`
             }
           }
-        }
-      },
-      scales: {
-        x: {
-          grid: { display: false },
-          ticks: {
-            color: '#e8e8e8',
-            callback: val => `${Math.floor(val / 60)}h`
-          },
-          border: { color: '#414141' }
         },
-        y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#414141' } }
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
+          y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#414141' } }
+        }
       }
     });
 
-    // ── MOST WATCHED ACTORS (bar) ─────────────────────────
+    window.toggleGenreChart = function(mode) {
+      const isRuntime = mode === 'runtime';
+      const d = genreChartData[mode];
+
+      genreChart.data.labels = d.labels;
+      genreChart.data.datasets[0].data = d.data;
+      genreChart.data.datasets[0].backgroundColor = PALETTE.slice(0, d.labels.length);
+
+      genreChart.options.plugins.tooltip.callbacks.label = isRuntime
+        ? ctx => { const h = Math.floor(ctx.raw / 60); const m = ctx.raw % 60; return ` ${h}h ${m}m`; }
+        : ctx => ` ${ctx.raw} films`;
+
+      genreChart.options.scales.x.ticks.callback = isRuntime
+        ? val => `${Math.floor(val / 60)}h`
+        : val => val;
+
+      genreChart.update();
+
+      document.getElementById('genre-toggle-count').style.background   = isRuntime ? 'var(--surface2)' : 'var(--text)';
+      document.getElementById('genre-toggle-count').style.color        = isRuntime ? 'var(--text-muted)' : 'var(--bg)';
+      document.getElementById('genre-toggle-runtime').style.background = isRuntime ? 'var(--text)' : 'var(--surface2)';
+      document.getElementById('genre-toggle-runtime').style.color      = isRuntime ? 'var(--bg)' : 'var(--text-muted)';
+    };
+
+    // ── MOST WATCHED ACTORS — COMBINED (bar) ──────────────────
     const seenActorTitles = {};
     rows.forEach(r => {
       const title = r[COL.title];
@@ -852,15 +926,81 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
     Object.entries(seenActorTitles).forEach(([actor, titles]) => {
       ac[actor] = titles.size;
     });
-    const ae = sortedEntries(Object.fromEntries(Object.entries(ac).filter(([, v]) => v >= 2)), 8);
-    makeChart('chart-actors', 'bar', ae.map(e => e[0]), ae.map(e => e[1]), {
-      indexAxis: 'y',
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
-        y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#414141' } }
+    const aeCount = sortedEntries(Object.fromEntries(Object.entries(ac).filter(([, v]) => v >= 2)), 10);
+
+    const actorRuntime = {};
+    rows.forEach(r => {
+      const runtime = parseInt(r[COL.runtime]);
+      if (!runtime) return;
+      (r[COL.actors] || '').split(',').map(a => a.trim()).filter(Boolean).forEach(a => {
+        actorRuntime[a] = (actorRuntime[a] || 0) + runtime;
+      });
+    });
+    const aeRuntime = sortedEntries(actorRuntime, 10);
+
+    const actorChartData = {
+      count: {
+        labels: aeCount.map(e => e[0]),
+        data:   aeCount.map(e => e[1])
+      },
+      runtime: {
+        labels: aeRuntime.map(e => e[0]),
+        data:   aeRuntime.map(e => e[1])
+      }
+    };
+
+    const actorChart = new Chart(document.getElementById('chart-actors-combined'), {
+      type: 'bar',
+      data: {
+        labels: actorChartData.count.labels,
+        datasets: [{
+          data: actorChartData.count.data,
+          backgroundColor: PALETTE.slice(0, actorChartData.count.labels.length),
+          borderWidth: 0,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        ...baseOpts,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.raw} films`
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
+          y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#414141' } }
+        }
       }
     });
+
+    window.toggleActorChart = function(mode) {
+      const isRuntime = mode === 'runtime';
+      const d = actorChartData[mode];
+
+      actorChart.data.labels = d.labels;
+      actorChart.data.datasets[0].data = d.data;
+      actorChart.data.datasets[0].backgroundColor = PALETTE.slice(0, d.labels.length);
+
+      actorChart.options.plugins.tooltip.callbacks.label = isRuntime
+        ? ctx => { const h = Math.floor(ctx.raw / 60); const m = ctx.raw % 60; return ` ${h}h ${m}m`; }
+        : ctx => ` ${ctx.raw} films`;
+
+      actorChart.options.scales.x.ticks.callback = isRuntime
+        ? val => `${Math.floor(val / 60)}h`
+        : val => val;
+
+      actorChart.update();
+
+      document.getElementById('actor-toggle-count').style.background   = isRuntime ? 'var(--surface2)' : 'var(--text)';
+      document.getElementById('actor-toggle-count').style.color        = isRuntime ? 'var(--text-muted)' : 'var(--bg)';
+      document.getElementById('actor-toggle-runtime').style.background = isRuntime ? 'var(--text)' : 'var(--surface2)';
+      document.getElementById('actor-toggle-runtime').style.color      = isRuntime ? 'var(--bg)' : 'var(--text-muted)';
+    };
 
     // ── HIGHEST RATED ACTORS (ranked list) ────────────────
     const actorFilms = {};
@@ -913,7 +1053,7 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
       .slice(0, 10);
     makeRankedList('top-genres-list', topGenres, (name, avg) => `${avg} avg`);
 
-    // ── MOST WATCHED DIRECTORS (bar) ─────────────────────
+    // ── MOST WATCHED DIRECTORS — COMBINED (bar) ───────────────
     const seenDirectorTitles = {};
     rows.forEach(r => {
       const title    = r[COL.title];
@@ -926,17 +1066,8 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
     Object.entries(seenDirectorTitles).forEach(([director, titles]) => {
       dc2[director] = titles.size;
     });
-    const de2 = sortedEntries(Object.fromEntries(Object.entries(dc2).filter(([, v]) => v >= 2)), 8);
-    makeChart('chart-directors', 'bar', de2.map(e => e[0]), de2.map(e => e[1]), {
-      indexAxis: 'y',
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
-        y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#414141' } }
-      }
-    });
+    const de2 = sortedEntries(Object.fromEntries(Object.entries(dc2).filter(([, v]) => v >= 2)), 10);
 
-    // ── MOST WATCHED DIRECTORS BY RUNTIME (bar) ──────────────
     const directorRuntime = {};
     rows.forEach(r => {
       const director = r[COL.director];
@@ -944,1240 +1075,71 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
       if (!director || !runtime) return;
       directorRuntime[director] = (directorRuntime[director] || 0) + runtime;
     });
-    const dre = sortedEntries(directorRuntime, 8);
-    makeChart('chart-directors-runtime', 'bar', dre.map(e => e[0]), dre.map(e => e[1]), {
-      indexAxis: 'y',
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => {
-              const totalMins = ctx.raw;
-              const h = Math.floor(totalMins / 60);
-              const m = totalMins % 60;
-              return ` ${h}h ${m}m`;
-            }
-          }
-        }
+    const dre = sortedEntries(directorRuntime, 10);
+
+    const directorChartData = {
+      count: {
+        labels: de2.map(e => e[0]),
+        data:   de2.map(e => e[1])
       },
-      scales: {
-        x: {
-          grid: { display: false },
-          ticks: {
-            color: '#e8e8e8',
-            callback: val => `${Math.floor(val / 60)}h`
-          },
-          border: { color: '#414141' }
-        },
-        y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#414141' } }
+      runtime: {
+        labels: dre.map(e => e[0]),
+        data:   dre.map(e => e[1])
       }
-    });
+    };
 
-    // ── HIGHEST RATED DIRECTORS (ranked list) ─────────────
-    const directorFilms = {};
-    rows.forEach(r => {
-      const rating   = parseFloat(r[COL.rating]);
-      const director = r[COL.director];
-      const title    = r[COL.title];
-      if (!rating || !director || !title) return;
-      if (!directorFilms[director]) directorFilms[director] = {};
-      if (!directorFilms[director][title] || rating > directorFilms[director][title]) {
-        directorFilms[director][title] = rating;
-      }
-    });
-    const directorRatingMap = {};
-    Object.entries(directorFilms).forEach(([director, films]) => {
-      const values = Object.values(films);
-      directorRatingMap[director] = {
-        total: values.reduce((a, b) => a + b, 0),
-        count: values.length
-      };
-    });
-    const topDirectorRatings = Object.entries(directorRatingMap)
-      .filter(([, { count }]) => count > 1)
-      .map(([name, { total, count }]) => [name, (total / count).toFixed(1), count])
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
-    const directorRatingList = document.getElementById('director-rating-list');
-    if (topDirectorRatings.length === 0) {
-      directorRatingList.innerHTML = '<li style="color:var(--text-muted); font-size:0.85rem;">Watch more films by the same director to see data here.</li>';
-    } else {
-      makeRankedList('director-rating-list', topDirectorRatings, (name, avg) => `${avg} avg`);
-    }
-
-    // ── WATCH COUNT BY SOURCE (doughnut) ──────────────────
-    const se          = sortedEntries(countBy(rows, r => r[COL.source]));
-    const sourceTotal = se.reduce((a, b) => a + b[1], 0);
-    new Chart(document.getElementById('chart-source'), {
-      type: 'doughnut',
+    const directorChart = new Chart(document.getElementById('chart-directors-combined'), {
+      type: 'bar',
       data: {
-        labels: se.map(e => e[0]),
+        labels: directorChartData.count.labels,
         datasets: [{
-          data: se.map(e => e[1]),
-          backgroundColor: PALETTE.slice(0, se.length),
-          borderColor: '#1a1a1a',
-          borderWidth: 2
+          data: directorChartData.count.data,
+          backgroundColor: PALETTE.slice(0, directorChartData.count.labels.length),
+          borderWidth: 0,
+          borderRadius: 4
         }]
       },
       options: {
         ...baseOpts,
-        scales: { x: { display: false }, y: { display: false } },
+        indexAxis: 'y',
         plugins: {
-          ...baseOpts.plugins,
-          tooltip: {
-            callbacks: {
-              title: () => '',
-              label: ctx => ` ${ctx.label}: ${ctx.raw} (${Math.round(ctx.raw / sourceTotal * 100)}%)`
-            }
-          }
-        }
-      }
-    });
-
-    // ── AVERAGE RATING BY SOURCE (bar) ────────────────────
-    const sourceRatings = {};
-    rows.forEach(r => {
-      const rating = parseFloat(r[COL.rating]);
-      const source = r[COL.source];
-      if (!rating || !source) return;
-      if (!sourceRatings[source]) sourceRatings[source] = { total: 0, count: 0 };
-      sourceRatings[source].total += rating;
-      sourceRatings[source].count++;
-    });
-    const sourceAvgEntries = Object.entries(sourceRatings)
-      .map(([name, { total, count }]) => [name, parseFloat((total / count).toFixed(1))])
-      .sort((a, b) => b[1] - a[1]);
-    makeChart('chart-source-rating', 'bar', sourceAvgEntries.map(e => e[0]), sourceAvgEntries.map(e => e[1]), {
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
-        y: { grid: { display: false }, min: 0, max: 10, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
-      }
-    });
-
-    // ── REWATCH PERCENTAGE (pie) ───────────────────────────
-    const newCount     = rows.filter(r => (r[COL.newOrRewatch] || '').toLowerCase().includes('new')).length;
-    const rewatchTotal = newCount + rewatches.length;
-    new Chart(document.getElementById('chart-rewatch'), {
-      type: 'pie',
-      data: {
-        labels: ['First Watch', 'Rewatch'],
-        datasets: [{
-          data: [newCount, rewatches.length],
-          backgroundColor: PALETTE.slice(0, 2),
-          borderColor: '#1a1a1a',
-          borderWidth: 2
-        }]
-      },
-      options: {
-        ...baseOpts,
-        scales: { x: { display: false }, y: { display: false } },
-        plugins: {
-          ...baseOpts.plugins,
-          tooltip: {
-            callbacks: {
-              title: () => '',
-              label: ctx => ` ${ctx.label}: ${ctx.raw} (${Math.round(ctx.raw / rewatchTotal * 100)}%)`
-            }
-          }
-        }
-      }
-    });
-
-    // ── FIRST WATCH VS REWATCH RATING (ranked list) ───────
-    const newRatings     = rows.filter(r => (r[COL.newOrRewatch] || '').toLowerCase().includes('new') && !isNaN(parseFloat(r[COL.rating]))).map(r => parseFloat(r[COL.rating]));
-    const rewatchRatings = rows.filter(r => (r[COL.newOrRewatch] || '').toLowerCase().includes('rewatch') && !isNaN(parseFloat(r[COL.rating]))).map(r => parseFloat(r[COL.rating]));
-    const newAvg         = newRatings.length ? (newRatings.reduce((a, b) => a + b, 0) / newRatings.length).toFixed(1) : null;
-    const rewatchAvg     = rewatchRatings.length ? (rewatchRatings.reduce((a, b) => a + b, 0) / rewatchRatings.length).toFixed(1) : null;
-    const rewatchCompData = [['First Watch', newAvg], ['Rewatch', rewatchAvg]].filter(e => e[1]);
-    makeRankedList('rewatch-rating-list', rewatchCompData, (name, avg) => `${avg} avg`);
-
-    // ── RATING DISTRIBUTION (bar) ─────────────────────────
-    const b = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0 };
-    ratings.forEach(r => {
-      const k = Math.round(r);
-      if (b[k] !== undefined) b[k]++;
-    });
-    const avgRating = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null;
-    makeChart('chart-ratings', 'bar', Object.keys(b), Object.values(b), {
-      plugins: {
-        legend: { display: false },
-        annotation: {
-          annotations: {
-            avgLine: {
-              type: 'line',
-              xMin: avgRating - 1,
-              xMax: avgRating - 1,
-              borderColor: '#a7a7a7',
-              borderWidth: 1,
-              borderDash: [4, 4],
-              label: {
-                display: true,
-                content: `Avg: ${avgRating.toFixed(1)}`,
-                color: '#a7a7a7',
-                font: { family: "'Inter', sans-serif", size: 10 },
-                position: 'start'
-              }
-            }
-          }
-        }
-      },
-      scales: {
-        x: { grid: { display: false }, title: { display: true, text: 'Rating', color: '#e8e8e8' }, border: { color: '#414141' } },
-        y: { grid: { display: false }, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
-      }
-    });
-
-    // ── RUNTIME VS RATING (scatter) ───────────────────────
-    const scatterData = rows
-      .filter(r => r[COL.runtime] && r[COL.rating] && !isNaN(parseInt(r[COL.runtime])) && !isNaN(parseFloat(r[COL.rating])))
-      .map(r => ({ x: parseInt(r[COL.runtime]), y: parseFloat(r[COL.rating]), title: r[COL.title] }));
-    new Chart(document.getElementById('chart-scatter'), {
-      type: 'scatter',
-      data: {
-        datasets: [{
-          data: scatterData,
-          backgroundColor: PALETTE[0] + 'cc',
-          borderColor: PALETTE[0],
-          borderWidth: 1,
-          pointRadius: 5,
-          pointHoverRadius: 7
-        }]
-      },
-      options: {
-        ...baseOpts,
-        plugins: {
-          ...baseOpts.plugins,
           legend: { display: false },
           tooltip: {
             callbacks: {
-              title: () => '',
-              label: ctx => ` ${ctx.raw.title} — ${ctx.raw.x} min, ${ctx.raw.y}/10`
+              label: ctx => ` ${ctx.raw} films`
             }
           }
         },
         scales: {
-          x: {
-            grid: { display: false },
-            title: { display: true, text: 'Runtime (min)', color: '#a7a7a7' },
-            ticks: { color: '#e8e8e8' },
-            border: { color: '#414141' }
-          },
-          y: {
-            grid: { display: false },
-            min: 0,
-            max: 10.5,
-            title: { display: true, text: 'Rating', color: '#a7a7a7' },
-            ticks: {
-              color: '#e8e8e8',
-              includeBounds: false,
-              callback: val => [0,1,2,3,4,5,6,7,8,9,10].includes(val) ? val : ''
-            },
-            border: { color: '#414141' }
-          }
+          x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
+          y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#414141' } }
         }
       }
     });
 
-    // ── WATCH COUNT BY MONTH (bar) ────────────────────────
-    const mc = {};
-    rows.forEach(r => {
-      const raw = r[COL.dateWatched] || r[COL.timestamp] || '';
-      if (!raw) return;
-      const d = new Date(raw);
-      if (isNaN(d)) return;
-      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      mc[k] = (mc[k] || 0) + 1;
-    });
-    const sm = Object.keys(mc).sort();
-    makeChart(
-      'chart-timeline', 'bar',
-      sm.map(k => { const [y, m] = k.split('-'); return new Date(y, m - 1).toLocaleString('default', { month: 'short', year: 'numeric' }); }),
-      sm.map(k => mc[k]),
-      {
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { display: false }, ticks: { color: '#e8e8e8', maxRotation: 45 }, border: { color: '#414141' } },
-          y: { grid: { display: false }, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
-        }
-      }
-    );
-
-    // ── WATCH COUNT BY DAY OF WEEK (bar) ──────────────────
-    const dayCounts = { Sunday: 0, Monday: 0, Tuesday: 0, Wednesday: 0, Thursday: 0, Friday: 0, Saturday: 0 };
-    rows.forEach(r => {
-      const raw = r[COL.dateWatched] || r[COL.timestamp] || '';
-      if (!raw) return;
-      const d = new Date(raw);
-      if (isNaN(d)) return;
-      const dayName = d.toLocaleString('default', { weekday: 'long' });
-      if (dayCounts[dayName] !== undefined) dayCounts[dayName]++;
-    });
-    makeChart('chart-dayofweek', 'bar', Object.keys(dayCounts), Object.values(dayCounts), {
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
-        y: { grid: { display: false }, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
-      }
-    });
-
-    // ── WATCH COUNT BY RELEASE DECADE (bar) ───────────────
-    const dc = {};
-    rows.forEach(r => {
-      const yr = parseInt(r[COL.year]);
-      if (!yr) return;
-      const d = Math.floor(yr / 10) * 10 + 's';
-      dc[d] = (dc[d] || 0) + 1;
-    });
-    const de = Object.entries(dc).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
-    makeChart('chart-decade', 'bar', de.map(e => e[0]), de.map(e => e[1]), {
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
-        y: { grid: { display: false }, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
-      }
-    });
-
-    // ── AVERAGE RATING BY DECADE (bar) ────────────────────
-    const decadeRatings = {};
-    rows.forEach(r => {
-      const yr     = parseInt(r[COL.year]);
-      const rating = parseFloat(r[COL.rating]);
-      if (!yr || !rating) return;
-      const decade = Math.floor(yr / 10) * 10 + 's';
-      if (!decadeRatings[decade]) decadeRatings[decade] = { total: 0, count: 0 };
-      decadeRatings[decade].total += rating;
-      decadeRatings[decade].count++;
-    });
-    const decadeAvgEntries = Object.entries(decadeRatings)
-      .map(([name, { total, count }]) => [name, parseFloat((total / count).toFixed(1))])
-      .sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
-    makeChart('chart-decade-rating', 'bar', decadeAvgEntries.map(e => e[0]), decadeAvgEntries.map(e => e[1]), {
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
-        y: { grid: { display: false }, min: 0, max: 10, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
-      }
-    });
-
-    // ── HIGHEST RATED NEW MOVIES TABLE ────────────────────
-    const tb         = document.getElementById('top-movies-body');
-    const seenTitles = new Set();
-    const dedupedFirstWatches = rated
-      .filter(r => (r[COL.newOrRewatch] || '').toLowerCase().includes('new'))
-      .sort((a, b) => +b[COL.rating] - +a[COL.rating])
-      .filter(r => {
-        if (seenTitles.has(r[COL.title])) return false;
-        seenTitles.add(r[COL.title]);
-        return true;
-      })
-      .slice(0, 15);
-    dedupedFirstWatches.forEach((r, i) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${i + 1}</td>
-        <td><strong>${r[COL.title] || '—'}</strong></td>
-        <td>${r[COL.director] || '—'}</td>
-        <td>${r[COL.year] || '—'}</td>
-        <td>${r[COL.genres] || '—'}</td>
-        <td>${r[COL.source] || '—'}</td>
-        <td><span class="rating-badge">${r[COL.rating]}</span></td>`;
-      tb.appendChild(tr);
-    });
-  }
-</script>
-</body>
-</html><!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cinemanalysis</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
-
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    :root {
-      --bg:         #0f0f0f;
-      --surface:    #1a1a1a;
-      --surface2:   #222222;
-      --border:     #2c2c2c;
-      --text:       #e8e8e8;
-      --text-muted: #a7a7a7;
-      --highlight:  #e8e8e8;
-    }
-
-    body {
-      background-color: var(--bg);
-      font-family: 'Inter', sans-serif;
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    /* ── HEADER ───────────────────────────────────────── */
-    header {
-      text-align: center;
-      padding: 64px 20px 48px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    header h1 {
-      font-family: 'Inter', sans-serif;
-      font-size: clamp(2.4rem, 6vw, 4rem);
-      color: var(--highlight);
-      font-weight: 600;
-      letter-spacing: -5px;
-      line-height: 1.1;
-    }
-
-    header h1 em {
-      font-style: italic;
-      color: var(--text-muted);
-    }
-
-    .header-sub {
-      font-family: 'Inter', sans-serif;
-      font-weight: 400;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      margin-top: 18px;
-      letter-spacing: none;
-      text-transform: uppercase;
-    }
-
-    /* ── LAYOUT ───────────────────────────────────────── */
-    main {
-      max-width: 1300px;
-      margin: 0 auto;
-      padding: 48px 24px 80px;
-      display: flex;
-      flex-direction: column;
-      gap: 48px;
-    }
-
-    /* ── SECTION TITLES ───────────────────────────────── */
-    .section-title {
-      font-family: 'Inter', sans-serif;
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: var(--text);
-      letter-spacing: none;
-      text-transform: none;
-      margin-bottom: 20px;
-      margin-top: 40px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .section-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    /* ── STAT CARDS ───────────────────────────────────── */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-
-      overflow: visible;
-    }
-
-    .stat-card {
-      background: var(--surface);
-      padding: 28px 20px;
-      text-align: center;
-    }
-
-    .stat-value {
-      font-family: 'Inter', sans-serif;
-      font-size: 1.8rem;
-      font-weight: 900;
-      color: var(--highlight);
-      line-height: 1;
-    }
-
-    .stat-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 0.8rem;
-      font-weight: 500;
-      color: var(--text-muted);
-      letter-spacing: none;
-      text-transform: none;
-      margin-top: 8px;
-    }
-
-    /* ── CHART CARDS ──────────────────────────────────── */
-    .charts-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      overflow: hidden;
-    }
-
-    .chart-card {
-      background: var(--surface);
-      padding: 28px;
-    }
-
-    .chart-card.wide {
-      grid-column: 1 / -1;
-      overflow-x: auto;
-    }
-
-    .chart-card.wide .chart-wrap {
-    min-width: 500px;
-    }
-
-    .chart-title {
-      font-family: 'Inter', sans-serif;
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text);
-      letter-spacing: none;
-      text-transform: none;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-    }
-
-    .chart-wrap {
-      position: relative;
-      height: 260px;
-    }
-
-    /* ── TABLES ───────────────────────────────────────── */
-    .table-wrap {
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-    }
-
-    thead tr {
-      border-bottom: 1px solid var(--border);
-    }
-
-    thead th {
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
-      font-size: 0.65rem;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      padding: 12px 16px;
-      text-align: left;
-    }
-
-    tbody tr {
-      border-bottom: 1px solid var(--border);
-      transition: background 0.15s;
-    }
-
-    tbody tr:hover {
-      background: var(--surface2);
-    }
-
-    tbody td {
-      padding: 14px 16px;
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      font-weight: 300;
-    }
-
-    .rating-badge {
-      color: var(--highlight);
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      padding: 2px 8px;
-      font-size: 0.8rem;
-      display: inline-block;
-    }
-
-    /* ── LOADING & ERROR ──────────────────────────────── */
-    #loading {
-      display: none;
-      text-align: center;
-      padding: 60px 20px;
-      font-family: 'Inter', sans-serif;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 24px;
-      height: 24px;
-      border: 2px solid var(--border);
-      border-top-color: var(--text-muted);
-      border-radius: 50%;
-      animation: spin 0.9s linear infinite;
-      margin-bottom: 16px;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    #error-msg {
-      display: none;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      border-radius: 4px;
-      padding: 24px 28px;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.85rem;
-      line-height: 1.8;
-    }
-
-    /* ── FOOTER ───────────────────────────────────────── */
-    footer {
-      text-align: center;
-      padding: 24px;
-      font-family: 'Inter', sans-serif;
-      font-weight: 500;
-      color: var(--text-muted);
-      font-size: 0.72rem;
-      letter-spacing: 0px;
-      text-transform: uppercase;
-      border-top: 1px solid var(--border);
-    }
-
-    #last-updated {
-      color: var(--text);
-    }
-
-    /* ── RESPONSIVE ───────────────────────────────────── */
-    @media (max-width: 600px) {
-      .charts-grid { grid-template-columns: 1fr; }
-      .stats-grid  { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    /* ── TOOLTIP ──────────────────────────────────────────── */
-    .tooltip-wrap {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-    }
-
-    .tooltip-trigger {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      border: 1.5px solid var(--text);
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      font-size: 0.6rem;
-      font-weight: 700;
-      cursor: default;
-      line-height: 1;
-      text-transform: none;
-
-      margin-left: 6px;
-    }
-
-    .tooltip-box {
-      display: none;
-      position: absolute;
-      top: calc(100% + 8px);
-      left: 0;
-      transform: translateX(-50%);
-      width: 220px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 10px 14px;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.75rem;
-      font-weight: 400;
-      color: var(--text-muted);
-      line-height: 1.6;
-      letter-spacing: 0;
-      text-transform: none;
-      text-align: left;
-      z-index: 100;
-    }
-
-    .tooltip-wrap:hover .tooltip-box {
-      display: block;
-    }
-
-    .chart-wrap.tall {
-      height: 500px;
-    }
-
-    p a {
-      color: var(--text);
-    }
-      </style>
-    </head>
-
-<body>
-  <!-- ── HEADER ─────────────────────────────────────────── -->
-  <header>
-    <h1>Cinemanalysis</h1>
-    <p class="header-sub">A live dashboard to visualize 2026 movie-watching data</p>
-  </header>
-
-  <!-- ── DATA PAGE ──────────────────────────────────────── -->
-  <main>
-
-    <div id="loading"><div class="spinner"></div><br>Developing the film…</div>
-    <div id="error-msg">
-      ⚠️ Could not load sheet data. Please check:<br>
-      • The sheet is published to the web as CSV<br>
-      • The URL is pasted correctly in SHEET_CSV_URL<br>
-      • You are connected to the internet
-    </div>
-
-    <div id="dashboard" style="display:none">
-
-      <!-- THE BIG PICTURE -->
-      <div>
-        <p class="section-title">The Big Picture</p>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-value" id="stat-total">—</div>
-            <div class="stat-label">Total Movies Watched</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-directors">—</div>
-            <div class="stat-label">Total Directors Watched</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-weeklyavg">—</div>
-            <div class="stat-label">Average Movies per Week</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-watchtime">—</div>
-            <div class="stat-label">Total Watch Time</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-watchage">—</div>
-            <div class="stat-label">Movie Watching Age
-              <span class="tooltip-wrap">
-                <span class="tooltip-trigger">?</span>
-                <span class="tooltip-box">An expression of how old your taste in movies would suggest you are. It weighs the release years of movies you watched against your ratings.</span>
-              </span>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-streak">—</div>
-            <div class="stat-label">Longest Streak
-              <span class="tooltip-wrap">
-                <span class="tooltip-trigger">?</span>
-                <span class="tooltip-box" id="tooltip-streak">—</span>
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- GENRES -->
-      <div>
-        <p class="section-title">Genre Data</p>
-        <div class="charts-grid">
-          <div class="chart-card">
-            <p class="chart-title">Most Watched Genres
-              <span class="tooltip-wrap">
-                <span class="tooltip-trigger">?</span>
-                <span class="tooltip-box">One movie can have multiple genres. Genre data sourced from TMDB.</span>
-              </span>
-            </p>
-            <div class="chart-wrap tall"><canvas id="chart-genre"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <p class="chart-title">Highest Rated Genres
-              <span class="tooltip-wrap">
-                <span class="tooltip-trigger">?</span>
-                <span class="tooltip-box">A genre must be watched at least 3 times to be included. Genre data sourced from TMDB.</span>
-              </span>
-            </p>
-            <ol id="top-genres-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
-          </div>
-        </div>
-      </div>
-
-      <!-- DIRECTORS -->
-      <div>
-        <p class="section-title">Director Data</p>
-        <div class="charts-grid">
-          <div class="chart-card">
-            <p class="chart-title">Most Watched Directors</p>
-            <div class="chart-wrap"><canvas id="chart-directors"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <p class="chart-title">Highest Rated Directors
-              <span class="tooltip-wrap">
-                <span class="tooltip-trigger">?</span>
-                <span class="tooltip-box">A director must be watched at least 2 times to be included.</span>
-              </span>
-            </p>
-            <ol id="director-rating-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
-          </div>
-        </div>
-      </div>
-
-      <!-- ACTORS -->
-      <div>
-        <p class="section-title">Actor Data</p>
-        <div class="charts-grid">
-          <div class="chart-card">
-            <p class="chart-title">Most Watched Actors
-                <span class="tooltip-wrap">
-                <span class="tooltip-trigger">?</span>
-                <span class="tooltip-box">The first ten billed actors for each movie are counted. Actor data sourced from TMDB.</span>
-              </span>
-            </p>
-            <div class="chart-wrap tall"><canvas id="chart-actors"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <p class="chart-title">Highest Rated Actors
-                <span class="tooltip-wrap">
-                <span class="tooltip-trigger">?</span>
-                <span class="tooltip-box">The first ten billed actors for each movie are counted. Actors must be watched at least 3 times to be included. Actor data sourced from TMDB.</span>
-              </span>
-            </p>
-            <ol id="actor-rating-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
-          </div>
-        </div>
-      </div>
-
-      <!-- SOURCES -->
-      <div>
-        <p class="section-title">Source Data</p>
-        <div class="charts-grid">
-          <div class="chart-card">
-            <p class="chart-title">Watch Volume by Source
-              <span class="tooltip-wrap">
-                <span class="tooltip-trigger">?</span>
-                <span class="tooltip-box">Source refers to how or where the movie was watched.</span>
-              </span>
-            </p>
-            <div class="chart-wrap"><canvas id="chart-source"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <p class="chart-title">Average Rating by Source</p>
-            <div class="chart-wrap"><canvas id="chart-source-rating"></canvas></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- WATCH STATUS -->
-      <div>
-        <p class="section-title">Watch Status Data</p>
-        <div class="charts-grid">
-          <div class="chart-card">
-            <p class="chart-title">Rewatch Rate
-              <span class="tooltip-wrap">
-                <span class="tooltip-trigger">?</span>
-                <span class="tooltip-box">Percentage of movies watched that have been watched at least once before.</span>
-              </span>
-            </p>
-            <div class="chart-wrap"><canvas id="chart-rewatch"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <p class="chart-title">Average Rating by Watch Status</p>
-            <ol id="rewatch-rating-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
-          </div>
-        </div>
-      </div>
-
-      <!-- RATINGS -->
-      <div>
-        <p class="section-title">Ratings Data</p>
-        <div class="charts-grid">
-          <div class="chart-card wide">
-            <p class="chart-title">Rating Distribution
-              <span class="tooltip-wrap">
-                <span class="tooltip-trigger">?</span>
-                <span class="tooltip-box">Watch count for each level in the rating scale.</span>
-              </span>
-            </p>
-            <div class="chart-wrap"><canvas id="chart-ratings"></canvas></div>
-          </div>
-          <div class="chart-card wide">
-            <p class="chart-title">Runtime vs. Rating</p>
-            <div class="chart-wrap"><canvas id="chart-scatter"></canvas></div>
-          </div>
-          <div class="chart-card wide">
-            <p class="chart-title">Average Rating by Release Decade</p>
-            <div class="chart-wrap"><canvas id="chart-decade-rating"></canvas></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- WATCH VOLUME DATA -->
-      <div>
-        <p class="section-title">Watch Volume Data</p>
-        <div class="charts-grid">
-          <div class="chart-card wide">
-            <p class="chart-title">Watch Volume by Month</p>
-            <div class="chart-wrap"><canvas id="chart-timeline"></canvas></div>
-          </div>
-          <div class="chart-card wide">
-            <p class="chart-title">Watch Volume by Day of the Week</p>
-            <div class="chart-wrap"><canvas id="chart-dayofweek"></canvas></div>
-          </div>
-          <div class="chart-card wide">
-            <p class="chart-title">Watch Volume by Release Decade</p>
-            <div class="chart-wrap"><canvas id="chart-decade"></canvas></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- HIGHEST RATED TABLE -->
-      <div>
-        <p class="section-title">Highest Rated New Movies This Year</p>
-        <div class="chart-card">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Movie Title</th>
-                  <th>Director</th>
-                  <th>Year</th>
-                  <th>Genre(s)</th>
-                  <th>Source</th>
-                  <th>Rating</th>
-                </tr>
-              </thead>
-              <tbody id="top-movies-body"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <br>
-      <br>
-      <p style="text-align: center;" style="color: var(--text-muted);">Title, release year, runtime, genre, director, and actor data are sourced via the <a href="https://www.themoviedb.org/" target="_blank">TMBD</a> API.</p>
-
-    </div><!-- /#dashboard -->
-  </main><!-- /#page-data -->
-
-  <!-- ── FOOTER ─────────────────────────────────────────── -->
-  <footer>Last refreshed: <span id="last-updated">—</span></footer>
-
-<script>
-  // ── CONFIG ──────────────────────────────────────────────
-  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdPMDM_QnyJp9fDZuITxCm2REcl-o0JrPfUuw38E0WmcSuT2KW0x5Ow2gs3SGCcXTKR7SDvEr3GKiz/pub?gid=629117052&single=true&output=csv";
-
-  const COL = {
-    timestamp:    "Timestamp",
-    title:        "Movie Title",
-    dateWatched:  "Date Watched",
-    source:       "Source",
-    newOrRewatch: "New or Rewatch",
-    year:         "Release Year",
-    director:     "Director",
-    runtime:      "Runtime (minutes)",
-    genres:       "Genres (Letterboxd)",
-    rating:       "Rating",
-    actors:       "Actors"
-  };
-
-  const PALETTE = [
-    "#c04444", "#268a7a", "#c45a7a", "#b8922a",
-    "#6a3d9e", "#3d5a9e", "#c06a30", "#3d8a5a"
-  ];
-
-  // ── CHART DEFAULTS ───────────────────────────────────────
-  Chart.defaults.font.family = "'Inter', sans-serif";
-  Chart.defaults.color = "#ffffff";
-
-  const baseOpts = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        labels: {
-          font: { family: "'Inter', sans-serif", size: 11 },
-          color: "#e8e8e8"
-        }
-      }
-    },
-    scales: {
-      x: { grid: { display: false } },
-      y: { grid: { display: false } }
-    }
-  };
-
-  // ── HELPERS ──────────────────────────────────────────────
-  function countBy(rows, fn) {
-    const c = {};
-    rows.forEach(r => {
-      const k = fn(r);
-      if (k) c[k] = (c[k] || 0) + 1;
-    });
-    return c;
-  }
-
-  function sortedEntries(obj, n = 10) {
-    return Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n);
-  }
-
-  function makeChart(id, type, labels, data, extra = {}) {
-    return new Chart(document.getElementById(id), {
-      type,
-      data: {
-        labels,
-        datasets: [{
-          data,
-          backgroundColor: PALETTE.slice(0, labels.length),
-          borderColor: "#e8dcc8",
-          borderWidth: type === 'bar' ? 0 : 2,
-          borderRadius: type === 'bar' ? 4 : 0
-        }]
-      },
-      options: { ...baseOpts, ...extra }
-    });
-  }
-
-  function makeRankedList(listId, items, rightLabelFn) {
-    const list = document.getElementById(listId);
-    items.forEach(([name, ...rest], i) => {
-      const rightLabel = rightLabelFn(name, ...rest);
-      const pct = Math.round((parseFloat(rest[0]) / 10) * 100);
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;">
-          <span style="font-family:'Inter',sans-serif; color:var(--text);">${i + 1}. ${name}</span>
-          <span style="font-family:'Inter',sans-serif; font-size:0.75rem; color:var(--text-muted);">${rightLabel}</span>
-        </div>
-        <div style="background:var(--border); border-radius:2px; height:4px; width:100%;">
-          <div style="background:var(--text); width:${pct}%; height:100%; border-radius:2px;"></div>
-        </div>`;
-      list.appendChild(li);
-    });
-  }
-
-  // ── INIT ─────────────────────────────────────────────────
-  window.addEventListener('DOMContentLoaded', () => {
-    if (!SHEET_CSV_URL) return;
-    document.getElementById('loading').style.display = 'block';
-    Papa.parse(SHEET_CSV_URL, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete(res) {
-        document.getElementById('loading').style.display = 'none';
-        if (!res.data?.length) {
-          document.getElementById('error-msg').style.display = 'block';
-          return;
-        }
-        buildDashboard(res.data);
-      },
-      error() {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('error-msg').style.display = 'block';
-      }
-    });
-  });
-
-  // ── BUILD DASHBOARD ──────────────────────────────────────
-  function buildDashboard(rows) {
-    document.getElementById('dashboard').style.display = 'block';
-    document.getElementById('last-updated').textContent = new Date().toLocaleString();
-
-    const rated    = rows.filter(r => r[COL.rating] && !isNaN(+r[COL.rating]));
-    const ratings  = rated.map(r => +r[COL.rating]);
-    const rewatches = rows.filter(r => (r[COL.newOrRewatch] || '').toLowerCase().includes('rewatch'));
-
-    // ── STATS ──────────────────────────────────────────────
-    const totalMins        = rows.reduce((sum, r) => sum + (parseInt(r[COL.runtime]) || 0), 0);
-    const days             = Math.floor(totalMins / 1440);
-    const hours            = Math.floor((totalMins % 1440) / 60);
-    const mins             = totalMins % 60;
-    const weeksSinceStart  = Math.max(1, (new Date() - new Date('2026-01-01')) / (1000 * 60 * 60 * 24 * 7));
-
-    document.getElementById('stat-total').textContent     = rows.length;
-    document.getElementById('stat-directors').textContent = new Set(rows.map(r => r[COL.director]).filter(Boolean)).size;
-    document.getElementById('stat-watchtime').textContent = `${days}d ${hours}h ${mins}m`;
-    console.log('totalMins:', totalMins);
-    console.log('runtime sample:', rows.slice(0,3).map(r => r[COL.runtime]));
-    document.getElementById('stat-weeklyavg').textContent = (rows.length / weeksSinceStart).toFixed(1);
-    const watchAgeData = rows.filter(r => r[COL.year] && r[COL.rating] && !isNaN(parseInt(r[COL.year])) && !isNaN(parseFloat(r[COL.rating])));
-    const watchAgeWeightedSum = watchAgeData.reduce((sum, r) => sum + (2046 - parseInt(r[COL.year])) * parseFloat(r[COL.rating]), 0);
-    const watchAgeRatingSum   = watchAgeData.reduce((sum, r) => sum + parseFloat(r[COL.rating]), 0);
-    const watchAge            = watchAgeRatingSum > 0 ? Math.round(watchAgeWeightedSum / watchAgeRatingSum) : null;
-    document.getElementById('stat-watchage').textContent = watchAge !== null ? `${watchAge}` : '—';
-    const watchDates = [...new Set(
-      rows
-        .map(r => r[COL.dateWatched] || r[COL.timestamp] || '')
-        .filter(Boolean)
-        .map(raw => {
-          const d = new Date(raw);
-          return isNaN(d) ? null : d.toISOString().slice(0, 10);
-        })
-        .filter(Boolean)
-    )].sort();
-
-    let longestStreak = 1, currentStreak = 1;
-    let longestStart  = watchDates[0], longestEnd = watchDates[0];
-    let currentStart  = watchDates[0];
-
-    for (let i = 1; i < watchDates.length; i++) {
-      const prev = new Date(watchDates[i - 1]);
-      const curr = new Date(watchDates[i]);
-      const diff = (curr - prev) / (1000 * 60 * 60 * 24);
-      if (diff === 1) {
-        currentStreak++;
-        if (currentStreak > longestStreak) {
-          longestStreak = currentStreak;
-          longestStart  = currentStart;
-          longestEnd    = watchDates[i];
-        }
-      } else {
-        currentStreak = 1;
-        currentStart  = watchDates[i];
-      }
-    }
-
-const formatDate = d => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-document.getElementById('stat-streak').textContent = watchDates.length ? `${longestStreak} days` : '—';
-document.getElementById('tooltip-streak').textContent = watchDates.length ? `${formatDate(longestStart)} — ${formatDate(longestEnd)}` : '—';
-
-    // ── MOST WATCHED GENRES (bar) ──────────────────────────
-    const gc = {};
-    rows.forEach(r =>
-      (r[COL.genres] || '').split(',').map(g => g.trim()).filter(Boolean).forEach(g => {
-        gc[g] = (gc[g] || 0) + 1;
-      })
-    );
-    const ge = sortedEntries(gc, 8);
-    makeChart('chart-genre', 'bar', ge.map(e => e[0]), ge.map(e => e[1]), {
-      indexAxis: 'y',
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
-        y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#414141' } }
-      }
-    });
-
-    // ── MOST WATCHED ACTORS (bar) ─────────────────────────
-    const seenActorTitles = {};
-    rows.forEach(r => {
-      const title = r[COL.title];
-      if (!title) return;
-      (r[COL.actors] || '').split(',').map(a => a.trim()).filter(Boolean).forEach(a => {
-        if (!seenActorTitles[a]) seenActorTitles[a] = new Set();
-        seenActorTitles[a].add(title);
-      });
-    });
-    const ac = {};
-    Object.entries(seenActorTitles).forEach(([actor, titles]) => {
-      ac[actor] = titles.size;
-    });
-    const ae = sortedEntries(Object.fromEntries(Object.entries(ac).filter(([, v]) => v >= 2)), 8);
-    makeChart('chart-actors', 'bar', ae.map(e => e[0]), ae.map(e => e[1]), {
-      indexAxis: 'y',
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
-        y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#414141' } }
-      }
-    });
-
-    // ── HIGHEST RATED ACTORS (ranked list) ────────────────
-    const actorFilms = {};
-    rows.forEach(r => {
-      const rating = parseFloat(r[COL.rating]);
-      const title  = r[COL.title];
-      if (!rating || !title) return;
-      (r[COL.actors] || '').split(',').map(a => a.trim()).filter(Boolean).forEach(a => {
-        if (!actorFilms[a]) actorFilms[a] = {};
-        if (!actorFilms[a][title] || rating > actorFilms[a][title]) {
-          actorFilms[a][title] = rating;
-        }
-      });
-    });
-    const actorRatingMap = {};
-    Object.entries(actorFilms).forEach(([actor, films]) => {
-      const values = Object.values(films);
-      actorRatingMap[actor] = {
-        total: values.reduce((a, b) => a + b, 0),
-        count: values.length
-      };
-    });
-    const topActorRatings = Object.entries(actorRatingMap)
-      .filter(([, { count }]) => count > 2)
-      .map(([name, { total, count }]) => [name, (total / count).toFixed(1), count])
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10);
-    const actorRatingList = document.getElementById('actor-rating-list');
-    if (topActorRatings.length === 0) {
-      actorRatingList.innerHTML = '<li style="color:var(--text-muted); font-size:0.85rem;">Watch more films with the same actor to see data here.</li>';
-    } else {
-      makeRankedList('actor-rating-list', topActorRatings, (name, avg) => `${avg} avg`);
-    }
-
-    // ── HIGHEST RATED GENRES (ranked list) ────────────────
-    const genreRatings = {};
-    rows.forEach(r => {
-      const rating = parseFloat(r[COL.rating]);
-      if (!rating) return;
-      (r[COL.genres] || '').split(',').map(g => g.trim()).filter(Boolean).forEach(g => {
-        if (!genreRatings[g]) genreRatings[g] = { total: 0, count: 0 };
-        genreRatings[g].total += rating;
-        genreRatings[g].count++;
-      });
-    });
-    const topGenres = Object.entries(genreRatings)
-      .filter(([, { count }]) => count >= 3)  
-      .map(([name, { total, count }]) => [name, (total / count).toFixed(1)])
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10);
-    makeRankedList('top-genres-list', topGenres, (name, avg) => `${avg} avg`);
-
-    // ── MOST WATCHED DIRECTORS (bar) ─────────────────────
-    const seenDirectorTitles = {};
-    rows.forEach(r => {
-      const title    = r[COL.title];
-      const director = r[COL.director];
-      if (!title || !director) return;
-      if (!seenDirectorTitles[director]) seenDirectorTitles[director] = new Set();
-      seenDirectorTitles[director].add(title);
-    });
-    const dc2 = {};
-    Object.entries(seenDirectorTitles).forEach(([director, titles]) => {
-      dc2[director] = titles.size;
-    });
-    const de2 = sortedEntries(Object.fromEntries(Object.entries(dc2).filter(([, v]) => v >= 2)), 8);
-    makeChart('chart-directors', 'bar', de2.map(e => e[0]), de2.map(e => e[1]), {
-      indexAxis: 'y',
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
-        y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#414141' } }
-      }
-    });
+    window.toggleDirectorChart = function(mode) {
+      const isRuntime = mode === 'runtime';
+      const d = directorChartData[mode];
+
+      directorChart.data.labels = d.labels;
+      directorChart.data.datasets[0].data = d.data;
+      directorChart.data.datasets[0].backgroundColor = PALETTE.slice(0, d.labels.length);
+
+      directorChart.options.plugins.tooltip.callbacks.label = isRuntime
+        ? ctx => { const h = Math.floor(ctx.raw / 60); const m = ctx.raw % 60; return ` ${h}h ${m}m`; }
+        : ctx => ` ${ctx.raw} films`;
+
+      directorChart.options.scales.x.ticks.callback = isRuntime
+        ? val => `${Math.floor(val / 60)}h`
+        : val => val;
+
+      directorChart.update();
+
+      document.getElementById('director-toggle-count').style.background   = isRuntime ? 'var(--surface2)' : 'var(--text)';
+      document.getElementById('director-toggle-count').style.color        = isRuntime ? 'var(--text-muted)' : 'var(--bg)';
+      document.getElementById('director-toggle-runtime').style.background = isRuntime ? 'var(--text)' : 'var(--surface2)';
+      document.getElementById('director-toggle-runtime').style.color      = isRuntime ? 'var(--bg)' : 'var(--text-muted)';
+    };
 
     // ── HIGHEST RATED DIRECTORS (ranked list) ─────────────
     const directorFilms = {};
@@ -2203,7 +1165,7 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
       .filter(([, { count }]) => count > 1)
       .map(([name, { total, count }]) => [name, (total / count).toFixed(1), count])
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+      .slice(0, 10);
     const directorRatingList = document.getElementById('director-rating-list');
     if (topDirectorRatings.length === 0) {
       directorRatingList.innerHTML = '<li style="color:var(--text-muted); font-size:0.85rem;">Watch more films by the same director to see data here.</li>';
