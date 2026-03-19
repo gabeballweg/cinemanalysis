@@ -346,8 +346,113 @@
     p a {
       color: var(--text);
     }
-      </style>
-    </head>
+
+    /* ── PUNCH CARD ───────────────────────────────────────── */
+    #punch-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 8px 0;
+    }
+
+    .punch-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .punch-decade-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      width: 44px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .punch-dots {
+      display: flex;
+      gap: 10px;
+      flex-wrap: nowrap;
+      align-items: center;
+    }
+
+    .punch-dot-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+    }
+
+    .punch-dot {
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: default;
+      transition: opacity 0.15s;
+      position: relative;
+    }
+
+    .punch-dot.watched {
+      background: #268a7a;
+      cursor: pointer;
+    }
+
+    .punch-dot.watched:hover {
+      opacity: 0.85;
+    }
+
+    .punch-dot.unwatched {
+      background: var(--border);
+    }
+
+    .punch-dot-count {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--bg);
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .punch-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      white-space: nowrap;
+      z-index: 200;
+      pointer-events: none;
+    }
+
+    .punch-tooltip strong {
+      display: block;
+      color: var(--text);
+      margin-bottom: 4px;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+    }
+
+    .punch-dot-wrap:hover .punch-tooltip {
+      display: block;
+    }
+  </style>
+</head>
 
 <body>
   <!-- ── HEADER ─────────────────────────────────────────── -->
@@ -460,7 +565,7 @@
               <span style="display:inline-flex; align-items:center;">Most Watched Directors
                 <span class="tooltip-wrap">
                   <span class="tooltip-trigger">?</span>
-                  <span class="tooltip-box">A director must have at least 2 films to appear. Rewatches of the same film are deduplicated for count, but included for runtime.</span>
+                  <span class="tooltip-box">A director must have at least 2 movies to appear. Rewatches of the same movie are deduplicated for count, but included for runtime.</span>
                 </span>
               </span>
               <span style="display:flex; gap:0;">
@@ -613,6 +718,20 @@
             <p class="chart-title">Watch Volume by Release Decade</p>
             <div class="chart-wrap"><canvas id="chart-decade"></canvas></div>
           </div>
+        </div>
+      </div>
+
+      <!-- MORE FUN STUFF -->
+      <div>
+        <p class="section-title">More Fun Stuff</p>
+        <div class="chart-card">
+          <p class="chart-title">Release Year Punch Card
+            <span class="tooltip-wrap">
+              <span class="tooltip-trigger">?</span>
+              <span class="tooltip-box">Each dot represents a year from 1960 to 2026. Dot size reflects how many unique titles you watched from that year. Rewatches are not counted.</span>
+            </span>
+          </p>
+          <div id="punch-card"></div>
         </div>
       </div>
 
@@ -877,7 +996,7 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: ctx => ` ${ctx.raw} films`
+              label: ctx => ` ${ctx.raw} movies`
             }
           }
         },
@@ -898,7 +1017,7 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
 
       genreChart.options.plugins.tooltip.callbacks.label = isRuntime
         ? ctx => { const h = Math.floor(ctx.raw / 60); const m = ctx.raw % 60; return ` ${h}h ${m}m`; }
-        : ctx => ` ${ctx.raw} films`;
+        : ctx => ` ${ctx.raw} movies`;
 
       genreChart.options.scales.x.ticks.callback = isRuntime
         ? val => `${Math.floor(val / 60)}h`
@@ -967,7 +1086,7 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: ctx => ` ${ctx.raw} films`
+              label: ctx => ` ${ctx.raw} movies`
             }
           }
         },
@@ -988,7 +1107,7 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
 
       actorChart.options.plugins.tooltip.callbacks.label = isRuntime
         ? ctx => { const h = Math.floor(ctx.raw / 60); const m = ctx.raw % 60; return ` ${h}h ${m}m`; }
-        : ctx => ` ${ctx.raw} films`;
+        : ctx => ` ${ctx.raw} movies`;
 
       actorChart.options.scales.x.ticks.callback = isRuntime
         ? val => `${Math.floor(val / 60)}h`
@@ -1030,7 +1149,7 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
       .slice(0, 10);
     const actorRatingList = document.getElementById('actor-rating-list');
     if (topActorRatings.length === 0) {
-      actorRatingList.innerHTML = '<li style="color:var(--text-muted); font-size:0.85rem;">Watch more films with the same actor to see data here.</li>';
+      actorRatingList.innerHTML = '<li style="color:var(--text-muted); font-size:0.85rem;">Watch more movies with the same actor to see data here.</li>';
     } else {
       makeRankedList('actor-rating-list', topActorRatings, (name, avg) => `${avg} avg`);
     }
@@ -1106,7 +1225,7 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: ctx => ` ${ctx.raw} films`
+              label: ctx => ` ${ctx.raw} movies`
             }
           }
         },
@@ -1127,7 +1246,7 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
 
       directorChart.options.plugins.tooltip.callbacks.label = isRuntime
         ? ctx => { const h = Math.floor(ctx.raw / 60); const m = ctx.raw % 60; return ` ${h}h ${m}m`; }
-        : ctx => ` ${ctx.raw} films`;
+        : ctx => ` ${ctx.raw} movies`;
 
       directorChart.options.scales.x.ticks.callback = isRuntime
         ? val => `${Math.floor(val / 60)}h`
@@ -1168,7 +1287,7 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
       .slice(0, 10);
     const directorRatingList = document.getElementById('director-rating-list');
     if (topDirectorRatings.length === 0) {
-      directorRatingList.innerHTML = '<li style="color:var(--text-muted); font-size:0.85rem;">Watch more films by the same director to see data here.</li>';
+      directorRatingList.innerHTML = '<li style="color:var(--text-muted); font-size:0.85rem;">Watch more movies by the same director to see data here.</li>';
     } else {
       makeRankedList('director-rating-list', topDirectorRatings, (name, avg) => `${avg} avg`);
     }
@@ -1427,6 +1546,96 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
         y: { grid: { display: false }, min: 0, max: 10, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
       }
     });
+
+    // ── RELEASE YEAR PUNCH CARD ───────────────────────────────
+    const punchData = {};
+    rows.forEach(r => {
+      const yr    = parseInt(r[COL.year]);
+      const title = r[COL.title];
+      if (!yr || !title) return;
+      if (!punchData[yr]) punchData[yr] = new Set();
+      punchData[yr].add(title);
+    });
+
+    const maxPunchCount = Math.max(...Object.values(punchData).map(s => s.size), 1);
+    const minDot = 10;
+    const maxDot = 32;
+
+    const punchContainer = document.getElementById('punch-card');
+    const startYear = 1960;
+    const endYear   = 2026;
+
+    for (let decade = startYear; decade <= endYear; decade += 10) {
+      const row = document.createElement('div');
+      row.className = 'punch-row';
+
+      const label = document.createElement('div');
+      label.className = 'punch-decade-label';
+      label.textContent = `${decade}s`;
+      row.appendChild(label);
+
+      const dotsWrap = document.createElement('div');
+      dotsWrap.className = 'punch-dots';
+
+      for (let yr = decade; yr < decade + 10 && yr <= endYear; yr++) {
+        const titles  = punchData[yr] ? [...punchData[yr]] : [];
+        const count   = titles.length;
+        const watched = count > 0;
+
+        const dotSize = watched
+          ? minDot + Math.round((count / maxPunchCount) * (maxDot - minDot))
+          : 14;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'punch-dot-wrap';
+
+        const dot = document.createElement('div');
+        dot.className = `punch-dot ${watched ? 'watched' : 'unwatched'}`;
+        dot.style.width  = `${dotSize}px`;
+        dot.style.height = `${dotSize}px`;
+
+        if (watched && count > 0) {
+          const countLabel = document.createElement('span');
+          countLabel.className = 'punch-dot-count';
+          countLabel.textContent = count;
+          dot.appendChild(countLabel);
+        }
+
+        const tooltip = document.createElement('div');
+        tooltip.className = 'punch-tooltip';
+
+        const yearLabel = document.createElement('strong');
+        yearLabel.textContent = yr;
+        tooltip.appendChild(yearLabel);
+
+        if (watched) {
+          const displayed = titles.slice(0, 10);
+          displayed.forEach(t => {
+            const line = document.createElement('div');
+            line.textContent = t;
+            tooltip.appendChild(line);
+          });
+          if (titles.length > 10) {
+            const more = document.createElement('div');
+            more.style.color = 'var(--text-muted)';
+            more.style.marginTop = '4px';
+            more.textContent = `+${titles.length - 10} more`;
+            tooltip.appendChild(more);
+          }
+        } else {
+          const none = document.createElement('div');
+          none.textContent = 'No movies watched';
+          tooltip.appendChild(none);
+        }
+
+        wrap.appendChild(dot);
+        wrap.appendChild(tooltip);
+        dotsWrap.appendChild(wrap);
+      }
+
+      row.appendChild(dotsWrap);
+      punchContainer.appendChild(row);
+    }
 
     // ── HIGHEST RATED NEW MOVIES TABLE ────────────────────
     const tb         = document.getElementById('top-movies-body');
