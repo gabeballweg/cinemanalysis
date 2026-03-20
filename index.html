@@ -343,90 +343,68 @@
       height: 500px;
     }
 
-    p a {
-      color: var(--text);
-    }
-
     /* ── PUNCH CARD ───────────────────────────────────────── */
     #punch-card {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      padding: 8px 0;
+      width: 100%;
     }
 
     .punch-row {
       display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .punch-decade-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 0.65rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      letter-spacing: 1px;
-      width: 44px;
-      text-align: right;
-      flex-shrink: 0;
+      align-items: stretch;
+      width: 100%;
     }
 
     .punch-dots {
       display: flex;
-      gap: 10px;
-      flex-wrap: nowrap;
-      align-items: center;
+      flex: 1;
     }
 
-    .punch-dot-wrap {
-      position: relative;
+    .punch-cell {
+      flex: 1;
+      aspect-ratio: 1;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      flex-shrink: 0;
-    }
-
-    .punch-dot {
-      border-radius: 50%;
-      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       cursor: default;
       transition: opacity 0.15s;
       position: relative;
+      border: 1px solid var(--bg);
     }
 
-    .punch-dot.watched {
+    .punch-cell.watched {
       background: #268a7a;
       cursor: pointer;
     }
 
-    .punch-dot.watched:hover {
-      opacity: 0.85;
+    .punch-cell.watched:hover {
+      opacity: 0.75;
     }
 
-    .punch-dot.unwatched {
-      background: var(--border);
+    .punch-cell.unwatched {
+      background: var(--surface2);
     }
 
-    .punch-dot-count {
+    .punch-cell-year {
       font-family: 'Inter', sans-serif;
-      font-size: 0.7rem;
-      font-weight: 700;
+      font-size: clamp(0.45rem, 1vw, 0.65rem);
+      font-weight: 600;
       color: var(--bg);
       line-height: 1;
       pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .punch-cell.unwatched .punch-cell-year {
+      color: var(--text-muted);
+      opacity: 0.5;
     }
 
     .punch-tooltip {
       display: none;
-      position: absolute;
-      bottom: calc(100% + 8px);
-      left: 50%;
-      transform: translateX(-50%);
+      position: fixed;
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: 4px;
@@ -436,7 +414,7 @@
       color: var(--text-muted);
       line-height: 1.6;
       white-space: nowrap;
-      z-index: 200;
+      z-index: 1000;
       pointer-events: none;
     }
 
@@ -447,10 +425,7 @@
       font-size: 0.7rem;
       letter-spacing: 1px;
     }
-
-    .punch-dot-wrap:hover .punch-tooltip {
-      display: block;
-    }
+    
   </style>
 </head>
 
@@ -724,14 +699,25 @@
       <!-- MORE FUN STUFF -->
       <div>
         <p class="section-title">More Fun Stuff</p>
-        <div class="chart-card">
-          <p class="chart-title">Release Year Punch Card
-            <span class="tooltip-wrap">
-              <span class="tooltip-trigger">?</span>
-              <span class="tooltip-box">Each dot represents a year from 1960 to 2026. Dot size reflects how many unique titles you watched from that year. Rewatches are not counted.</span>
-            </span>
-          </p>
-          <div id="punch-card"></div>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <p class="chart-title">Release Year Punch Card
+              <span class="tooltip-wrap">
+                <span class="tooltip-trigger">?</span>
+                <span class="tooltip-box">Each cell represents a year from 1960 to 2026. Filled cells indicate years where at least one movie has been watched. Hover for details.</span>
+              </span>
+            </p>
+            <div id="punch-card"></div>
+          </div>
+          <div class="chart-card">
+            <p class="chart-title">Runtime by Average Rating
+              <span class="tooltip-wrap">
+                <span class="tooltip-trigger">?</span>
+                <span class="tooltip-box">Average rating broken down by film runtime buckets.</span>
+              </span>
+            </p>
+            <div class="chart-wrap"><canvas id="chart-runtime-sweetspot"></canvas></div>
+          </div>
         </div>
       </div>
 
@@ -758,15 +744,11 @@
         </div>
       </div>
 
-      <br>
-      <br>
-      <p style="text-align: center;" style="color: var(--text-muted);">Title, release year, runtime, genre, director, and actor data are sourced via the <a href="https://www.themoviedb.org/" target="_blank">TMBD</a> API.</p>
-
     </div><!-- /#dashboard -->
   </main><!-- /#page-data -->
 
   <!-- ── FOOTER ─────────────────────────────────────────── -->
-  <footer>Last refreshed: <span id="last-updated">—</span></footer>
+  <footer>Last refreshed: <span id="last-updated">—</span> &nbsp;·&nbsp; Movie metadata are sourced via the <a href="https://www.themoviedb.org/" target="_blank" style="color: var(--text);">TMDB</a> API</footer>
 
 <script>
   // ── CONFIG ──────────────────────────────────────────────
@@ -903,8 +885,6 @@
     document.getElementById('stat-total').textContent     = rows.length;
     document.getElementById('stat-directors').textContent = new Set(rows.map(r => r[COL.director]).filter(Boolean)).size;
     document.getElementById('stat-watchtime').textContent = `${days}d ${hours}h ${mins}m`;
-    console.log('totalMins:', totalMins);
-    console.log('runtime sample:', rows.slice(0,3).map(r => r[COL.runtime]));
     document.getElementById('stat-weeklyavg').textContent = (rows.length / weeksSinceStart).toFixed(1);
     const watchAgeData = rows.filter(r => r[COL.year] && r[COL.rating] && !isNaN(parseInt(r[COL.year])) && !isNaN(parseFloat(r[COL.rating])));
     const watchAgeWeightedSum = watchAgeData.reduce((sum, r) => sum + (2046 - parseInt(r[COL.year])) * parseFloat(r[COL.rating]), 0);
@@ -1557,85 +1537,152 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
       punchData[yr].add(title);
     });
 
-    const maxPunchCount = Math.max(...Object.values(punchData).map(s => s.size), 1);
-    const minDot = 10;
-    const maxDot = 32;
-
     const punchContainer = document.getElementById('punch-card');
     const startYear = 1960;
     const endYear   = 2026;
+
+    const sharedTooltip = document.createElement('div');
+    sharedTooltip.className = 'punch-tooltip';
+    document.body.appendChild(sharedTooltip);
 
     for (let decade = startYear; decade <= endYear; decade += 10) {
       const row = document.createElement('div');
       row.className = 'punch-row';
 
-      const label = document.createElement('div');
-      label.className = 'punch-decade-label';
-      label.textContent = `${decade}s`;
-      row.appendChild(label);
-
-      const dotsWrap = document.createElement('div');
-      dotsWrap.className = 'punch-dots';
+      const cellsWrap = document.createElement('div');
+      cellsWrap.className = 'punch-dots';
 
       for (let yr = decade; yr < decade + 10 && yr <= endYear; yr++) {
         const titles  = punchData[yr] ? [...punchData[yr]] : [];
         const count   = titles.length;
         const watched = count > 0;
 
-        const dotSize = watched
-          ? minDot + Math.round((count / maxPunchCount) * (maxDot - minDot))
-          : 14;
+        const cell = document.createElement('div');
+        cell.className = `punch-cell ${watched ? 'watched' : 'unwatched'}`;
 
-        const wrap = document.createElement('div');
-        wrap.className = 'punch-dot-wrap';
-
-        const dot = document.createElement('div');
-        dot.className = `punch-dot ${watched ? 'watched' : 'unwatched'}`;
-        dot.style.width  = `${dotSize}px`;
-        dot.style.height = `${dotSize}px`;
-
-        if (watched && count > 0) {
-          const countLabel = document.createElement('span');
-          countLabel.className = 'punch-dot-count';
-          countLabel.textContent = count;
-          dot.appendChild(countLabel);
-        }
-
-        const tooltip = document.createElement('div');
-        tooltip.className = 'punch-tooltip';
-
-        const yearLabel = document.createElement('strong');
+        const yearLabel = document.createElement('span');
+        yearLabel.className = 'punch-cell-year';
         yearLabel.textContent = yr;
-        tooltip.appendChild(yearLabel);
+        cell.appendChild(yearLabel);
 
-        if (watched) {
-          const displayed = titles.slice(0, 10);
-          displayed.forEach(t => {
-            const line = document.createElement('div');
-            line.textContent = t;
-            tooltip.appendChild(line);
-          });
-          if (titles.length > 10) {
-            const more = document.createElement('div');
-            more.style.color = 'var(--text-muted)';
-            more.style.marginTop = '4px';
-            more.textContent = `+${titles.length - 10} more`;
-            tooltip.appendChild(more);
+        const buildTooltipContent = () => {
+          sharedTooltip.innerHTML = '';
+          const yrLabel = document.createElement('strong');
+          yrLabel.textContent = yr;
+          sharedTooltip.appendChild(yrLabel);
+          if (watched) {
+            titles.slice(0, 10).forEach(t => {
+              const line = document.createElement('div');
+              line.textContent = t;
+              sharedTooltip.appendChild(line);
+            });
+            if (titles.length > 10) {
+              const more = document.createElement('div');
+              more.style.color = 'var(--text-muted)';
+              more.style.marginTop = '4px';
+              more.textContent = `+${titles.length - 10} more`;
+              sharedTooltip.appendChild(more);
+            }
+          } else {
+            const none = document.createElement('div');
+            none.textContent = 'No movies watched';
+            sharedTooltip.appendChild(none);
           }
-        } else {
-          const none = document.createElement('div');
-          none.textContent = 'No movies watched';
-          tooltip.appendChild(none);
-        }
+        };
 
-        wrap.appendChild(dot);
-        wrap.appendChild(tooltip);
-        dotsWrap.appendChild(wrap);
+        cell.addEventListener('mouseenter', e => {
+          buildTooltipContent();
+          sharedTooltip.style.display = 'block';
+          positionTooltip(e.currentTarget);
+        });
+
+        cell.addEventListener('mouseleave', () => {
+          sharedTooltip.style.display = 'none';
+        });
+
+        cellsWrap.appendChild(cell);
       }
 
-      row.appendChild(dotsWrap);
-      punchContainer.appendChild(row);
+      // Pad incomplete rows with invisible cells
+          const cellsInRow = Math.min(decade + 10, endYear + 1) - decade;
+          for (let p = cellsInRow; p < 10; p++) {
+            const phantom = document.createElement('div');
+            phantom.className = 'punch-cell';
+            phantom.style.background = 'transparent';
+            phantom.style.border = '1px solid transparent';
+            phantom.style.cursor = 'default';
+            phantom.style.pointerEvents = 'none';
+            cellsWrap.appendChild(phantom);
+          }
+
+          row.appendChild(cellsWrap);
+          punchContainer.appendChild(row);
+        }
+
+    function positionTooltip(target) {
+      const rect   = target.getBoundingClientRect();
+      const tipW   = sharedTooltip.offsetWidth  || 180;
+      const tipH   = sharedTooltip.offsetHeight || 100;
+      const margin = 8;
+      const vw     = window.innerWidth;
+
+      let top  = rect.top - tipH - margin;
+      if (top < 0) top = rect.bottom + margin;
+
+      let left = rect.left + rect.width / 2 - tipW / 2;
+      left = Math.max(margin, Math.min(left, vw - tipW - margin));
+
+      sharedTooltip.style.top  = `${top}px`;
+      sharedTooltip.style.left = `${left}px`;
     }
+
+    // ── RUNTIME SWEET SPOT (bar) ──────────────────────────────
+    const runtimeBuckets = {
+      '<90 min':      { total: 0, count: 0 },
+      '91–120 min':   { total: 0, count: 0 },
+      '121–150 min':  { total: 0, count: 0 },
+      '151–180 min':  { total: 0, count: 0 },
+      '>180 min':     { total: 0, count: 0 }
+    };
+
+    rows.forEach(r => {
+      const runtime = parseInt(r[COL.runtime]);
+      const rating  = parseFloat(r[COL.rating]);
+      if (!runtime || !rating) return;
+      if      (runtime <= 90)  runtimeBuckets['<90 min'].total      += rating, runtimeBuckets['<90 min'].count++;
+      else if (runtime <= 120) runtimeBuckets['91–120 min'].total   += rating, runtimeBuckets['91–120 min'].count++;
+      else if (runtime <= 150) runtimeBuckets['121–150 min'].total  += rating, runtimeBuckets['121–150 min'].count++;
+      else if (runtime <= 180) runtimeBuckets['151–180 min'].total  += rating, runtimeBuckets['151–180 min'].count++;
+      else                     runtimeBuckets['>180 min'].total     += rating, runtimeBuckets['>180 min'].count++;
+    });
+
+    const sweetspotLabels = Object.keys(runtimeBuckets);
+    const sweetspotData   = sweetspotLabels.map(k =>
+      runtimeBuckets[k].count > 0
+        ? parseFloat((runtimeBuckets[k].total / runtimeBuckets[k].count).toFixed(1))
+        : 0
+    );
+
+    makeChart('chart-runtime-sweetspot', 'bar', sweetspotLabels, sweetspotData, {
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.raw} avg · ${runtimeBuckets[ctx.label].count} films`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
+        y: {
+          grid: { display: false },
+          min: 0,
+          max: 10,
+          ticks: { stepSize: 1, color: '#e8e8e8' },
+          border: { color: '#414141' }
+        }
+      }
+    });
 
     // ── HIGHEST RATED NEW MOVIES TABLE ────────────────────
     const tb         = document.getElementById('top-movies-body');
