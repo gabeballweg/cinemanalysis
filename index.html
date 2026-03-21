@@ -44,14 +44,9 @@
       font-family: 'Inter', sans-serif;
       font-size: clamp(2.4rem, 6vw, 4rem);
       color: var(--highlight);
-      font-weight: 600;
+      font-weight: 800;
       letter-spacing: -0.1em;
       line-height: 1.1;
-    }
-
-    header h1 em {
-      font-style: italic;
-      color: var(--text-muted);
     }
 
     .header-sub {
@@ -60,7 +55,7 @@
       color: var(--text-muted);
       font-size: 0.8rem;
       margin-top: 18px;
-      letter-spacing: none;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
     }
 
@@ -103,7 +98,6 @@
       gap: 1px;
       background: var(--border);
       border: 1px solid var(--border);
-
       overflow: visible;
     }
 
@@ -371,7 +365,7 @@
       cursor: default;
       transition: opacity 0.15s;
       position: relative;
-      border: 1px solid var(--bg);
+      border: 1px solid var(--surface);
     }
 
     .punch-cell.watched {
@@ -432,7 +426,7 @@
 <body>
   <!-- ── HEADER ─────────────────────────────────────────── -->
   <header>
-    <h1>Cinemanalysis</h1>
+    <h1><span style="color:#c04444;">C</span><span style="color:#c06a30;">i</span><span style="color:#b8922a;">n</span><span style="color:#3d8a5a;">e</span><span style="color:#268a7a;">m</span><span style="color:#3d5a9e;">a</span>nalysis</h1>
     <p class="header-sub">A live dashboard to visualize 2026 movie-watching data</p>
   </header>
 
@@ -723,7 +717,23 @@
 
       <!-- HIGHEST RATED TABLE -->
       <div>
-        <p class="section-title">Highest Rated New Movies This Year</p>
+        <div style="display:flex; align-items:center; margin-bottom:20px; margin-top:40px; gap:16px;">
+          <p class="section-title" style="margin:0; flex:1;">Top Movies of the Year</p>
+          <span style="display:flex; gap:0; flex-shrink:0;">
+            <button id="table-toggle-new" onclick="toggleMovieTable('new')" style="
+              background: var(--text); color: var(--bg);
+              border: none; border-radius: 4px 0 0 4px;
+              font-family: 'Inter', sans-serif; font-size: 0.6rem;
+              font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+              padding: 4px 10px; cursor: pointer;">First Watch</button>
+            <button id="table-toggle-rewatch" onclick="toggleMovieTable('rewatch')" style="
+              background: var(--surface2); color: var(--text-muted);
+              border: none; border-radius: 0 4px 4px 0;
+              font-family: 'Inter', sans-serif; font-size: 0.6rem;
+              font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+              padding: 4px 10px; cursor: pointer;">Rewatch</button>
+          </span>
+        </div>
         <div class="chart-card">
           <div class="table-wrap">
             <table>
@@ -748,7 +758,7 @@
   </main><!-- /#page-data -->
 
   <!-- ── FOOTER ─────────────────────────────────────────── -->
-  <footer>Last refreshed: <span id="last-updated">—</span> &nbsp;·&nbsp; Movie metadata are sourced via the <a href="https://www.themoviedb.org/" target="_blank" style="color: var(--text);">TMDB</a> API</footer>
+  <footer>Last refreshed: <span id="last-updated">—</span> &nbsp;·&nbsp; Movie metadata sourced via the <a href="https://www.themoviedb.org/" target="_blank" style="color: var(--text);">TMDB</a> API</footer>
 
 <script>
   // ── CONFIG ──────────────────────────────────────────────
@@ -1684,30 +1694,61 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
       }
     });
 
-    // ── HIGHEST RATED NEW MOVIES TABLE ────────────────────
-    const tb         = document.getElementById('top-movies-body');
-    const seenTitles = new Set();
-    const dedupedFirstWatches = rated
-      .filter(r => (r[COL.newOrRewatch] || '').toLowerCase().includes('new'))
-      .sort((a, b) => +b[COL.rating] - +a[COL.rating])
-      .filter(r => {
-        if (seenTitles.has(r[COL.title])) return false;
-        seenTitles.add(r[COL.title]);
-        return true;
-      })
-      .slice(0, 15);
-    dedupedFirstWatches.forEach((r, i) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${i + 1}</td>
-        <td><strong>${r[COL.title] || '—'}</strong></td>
-        <td>${r[COL.director] || '—'}</td>
-        <td>${r[COL.year] || '—'}</td>
-        <td>${r[COL.genres] || '—'}</td>
-        <td>${r[COL.source] || '—'}</td>
-        <td><span class="rating-badge">${r[COL.rating]}</span></td>`;
-      tb.appendChild(tr);
-    });
+    // ── HIGHEST RATED MOVIES TABLE ────────────────────────
+    const tb = document.getElementById('top-movies-body');
+
+    const dedupedFirstWatches = (() => {
+      const seen = new Set();
+      return rated
+        .filter(r => (r[COL.newOrRewatch] || '').toLowerCase().includes('new'))
+        .sort((a, b) => +b[COL.rating] - +a[COL.rating])
+        .filter(r => {
+          if (seen.has(r[COL.title])) return false;
+          seen.add(r[COL.title]);
+          return true;
+        })
+        .slice(0, 15);
+    })();
+
+    const dedupedRewatches = (() => {
+      const seen = new Set();
+      return rated
+        .filter(r => (r[COL.newOrRewatch] || '').toLowerCase().includes('rewatch'))
+        .sort((a, b) => +b[COL.rating] - +a[COL.rating])
+        .filter(r => {
+          if (seen.has(r[COL.title])) return false;
+          seen.add(r[COL.title]);
+          return true;
+        })
+        .slice(0, 15);
+    })();
+
+    function renderMovieTable(data) {
+      tb.innerHTML = '';
+      data.forEach((r, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${i + 1}</td>
+          <td><strong>${r[COL.title] || '—'}</strong></td>
+          <td>${r[COL.director] || '—'}</td>
+          <td>${r[COL.year] || '—'}</td>
+          <td>${r[COL.genres] || '—'}</td>
+          <td>${r[COL.source] || '—'}</td>
+          <td><span class="rating-badge">${r[COL.rating]}</span></td>`;
+        tb.appendChild(tr);
+      });
+    }
+
+    window.toggleMovieTable = function(mode) {
+      const isRewatch = mode === 'rewatch';
+      renderMovieTable(isRewatch ? dedupedRewatches : dedupedFirstWatches);
+      document.getElementById('table-toggle-new').style.background     = isRewatch ? 'var(--surface2)' : 'var(--text)';
+      document.getElementById('table-toggle-new').style.color          = isRewatch ? 'var(--text-muted)' : 'var(--bg)';
+      document.getElementById('table-toggle-rewatch').style.background = isRewatch ? 'var(--text)' : 'var(--surface2)';
+      document.getElementById('table-toggle-rewatch').style.color      = isRewatch ? 'var(--bg)' : 'var(--text-muted)';
+    };
+
+    renderMovieTable(dedupedFirstWatches);
   }
 </script>
 </body>
