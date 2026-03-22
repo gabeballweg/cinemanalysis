@@ -274,6 +274,7 @@
     <input type="hidden" id="field-genres" />
     <input type="hidden" id="field-actors" />
     <input type="hidden" id="field-tmdb-id" />
+    <input type="hidden" id="field-poster-path" />
 
     <!-- DATE WATCHED -->
     <div class="field">
@@ -445,13 +446,14 @@
       const actors    = credits.cast.slice(0, 10).map(p => p.name).join(', ');
 
       // Populate hidden fields
-      document.getElementById('field-title').value    = title;
-      document.getElementById('field-year').value     = year;
-      document.getElementById('field-director').value = director;
-      document.getElementById('field-runtime').value  = runtime;
-      document.getElementById('field-genres').value   = genres;
-      document.getElementById('field-actors').value   = actors;
-      document.getElementById('field-tmdb-id').value  = movie.id;
+      document.getElementById('field-title').value       = title;
+      document.getElementById('field-year').value        = year;
+      document.getElementById('field-director').value    = director;
+      document.getElementById('field-runtime').value     = runtime;
+      document.getElementById('field-genres').value      = genres;
+      document.getElementById('field-actors').value      = actors;
+      document.getElementById('field-tmdb-id').value     = movie.id;
+      document.getElementById('field-poster-path').value = movie.poster_path || '';
 
       // Show preview
       const preview = document.getElementById('movie-preview');
@@ -486,7 +488,8 @@
       dateWatched: document.getElementById('field-date').value,
       source:      document.getElementById('field-source').value,
       rewatch:     document.getElementById('field-rewatch').value,
-      rating:      document.getElementById('field-rating').value
+      rating:      document.getElementById('field-rating').value,
+      posterPath:  document.getElementById('field-poster-path').value
     };
 
     // Basic validation
