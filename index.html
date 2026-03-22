@@ -166,59 +166,6 @@
       height: 260px;
     }
 
-    /* ── TABLES ───────────────────────────────────────── */
-    .table-wrap {
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-    }
-
-    thead tr {
-      border-bottom: 1px solid var(--border);
-    }
-
-    thead th {
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
-      font-size: 0.65rem;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      padding: 12px 16px;
-      text-align: left;
-    }
-
-    tbody tr {
-      border-bottom: 1px solid var(--border);
-      transition: background 0.15s;
-    }
-
-    tbody tr:hover {
-      background: var(--surface2);
-    }
-
-    tbody td {
-      padding: 14px 16px;
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      font-weight: 300;
-    }
-
-    .rating-badge {
-      color: var(--highlight);
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      padding: 2px 8px;
-      font-size: 0.8rem;
-      display: inline-block;
-    }
-
     /* ── LOADING & ERROR ──────────────────────────────── */
     #loading {
       display: none;
@@ -419,7 +366,103 @@
       font-size: 0.7rem;
       letter-spacing: 1px;
     }
-    
+
+    /* ── COLLAPSIBLE SECTIONS ─────────────────────────────── */
+    .section-title {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .section-chevron {
+      font-size: 1.5rem;
+      color: var(--text);
+      transition: transform 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    .section-chevron.collapsed {
+      transform: rotate(-90deg);
+    }
+
+    .section-body {
+      overflow: hidden;
+      transition: max-height 0.3s ease, opacity 0.3s ease;
+      max-height: 5000px;
+      opacity: 1;
+    }
+
+    .section-body.collapsed {
+      max-height: 0;
+      opacity: 0;
+    }
+
+    /* ── MOVIE POSTER GRID ────────────────────────────────── */
+    .movie-poster-card {
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .movie-poster-img {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      display: block;
+      background: var(--surface2);
+    }
+
+    .movie-poster-placeholder {
+      width: 100%;
+      aspect-ratio: 2/3;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-family: 'Inter', sans-serif;
+      text-align: center;
+      padding: 12px;
+      line-height: 1.4;
+    }
+
+    .movie-poster-info {
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+      justify-content: space-between;
+    }
+
+    .movie-poster-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .movie-poster-meta {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .movie-poster-rating {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: var(--text);
+    color: var(--surface2);
+    margin-top: 4px;
+    border-radius: 4px;
+    padding: 2px 6px;
+    display: inline-block;
+    align-self: flex-start;
+  }
+          
   </style>
 </head>
 
@@ -445,8 +488,12 @@
 
       <!-- THE BIG PICTURE -->
       <div>
-        <p class="section-title">The Big Picture</p>
-        <div class="stats-grid">
+        <p class="section-title" onclick="toggleSection(this)">
+          <span class="section-chevron">🡣</span>
+          The Big Picture
+        </p>
+        <div class="section-body">
+          <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-value" id="stat-total">—</div>
             <div class="stat-label">Movies Watched</div>
@@ -483,11 +530,51 @@
           </div>
         </div>
       </div>
+      </div>
+
+      <!-- HIGHEST RATED TABLE -->
+      <div>
+        <div style="display:flex; align-items:center; margin-bottom:20px; margin-top:40px; gap:16px; cursor:pointer; user-select:none;" onclick="toggleSectionByBody(this.nextElementSibling); this.querySelector('.section-chevron').classList.toggle('collapsed');">
+          <p class="section-title" style="margin:0; flex:1; cursor:pointer;">
+            <span class="section-chevron">🡣</span>
+            Top Movies of the Year
+          </p>
+          <span style="display:flex; gap:0; flex-shrink:0;" onclick="event.stopPropagation();">
+            <button id="table-toggle-new" onclick="toggleMovieTable('new')" style="
+              background: var(--text); color: var(--bg);
+              border: none; border-radius: 4px 0 0 4px;
+              font-family: 'Inter', sans-serif; font-size: 0.6rem;
+              font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+              padding: 4px 10px; cursor: pointer;">First Watch</button>
+            <button id="table-toggle-rewatch" onclick="toggleMovieTable('rewatch')" style="
+              background: var(--surface2); color: var(--text-muted);
+              border: none; border-radius: 0 4px 4px 0;
+              font-family: 'Inter', sans-serif; font-size: 0.6rem;
+              font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+              padding: 4px 10px; cursor: pointer;">Rewatch</button>
+          </span>
+        </div>
+        <div class="section-body">
+          <div id="movie-poster-grid" style="
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+          "></div>
+        </div>
+      </div>
 
       <!-- GENRES -->
       <div>
-        <p class="section-title">Genre Data</p>
-        <div class="charts-grid">
+        <p class="section-title" onclick="toggleSection(this)">
+          <span class="section-chevron collapsed">🡣</span>
+          Genre Data
+        </p>
+        <div class="section-body collapsed">
+          <div class="charts-grid">
           <div class="chart-card">
             <p class="chart-title" style="justify-content:space-between;">
               <span style="display:inline-flex; align-items:center;">Most Watched Genres
@@ -524,11 +611,16 @@
           </div>
         </div>
       </div>
+      </div>
 
       <!-- DIRECTORS -->
       <div>
-        <p class="section-title">Director Data</p>
-        <div class="charts-grid">
+        <p class="section-title" onclick="toggleSection(this)">
+          <span class="section-chevron collapsed">🡣</span>
+          Director Data
+        </p>
+        <div class="section-body collapsed">
+          <div class="charts-grid">
           <div class="chart-card">
             <p class="chart-title" style="justify-content:space-between;">
               <span style="display:inline-flex; align-items:center;">Most Watched Directors
@@ -568,8 +660,12 @@
 
       <!-- ACTORS -->
       <div>
-        <p class="section-title">Actor Data</p>
-        <div class="charts-grid">
+        <p class="section-title" onclick="toggleSection(this)">
+          <span class="section-chevron collapsed">🡣</span>
+          Actor Data
+        </p>
+        <div class="section-body collapsed">
+          <div class="charts-grid">
           <div class="chart-card">
             <p class="chart-title" style="justify-content:space-between;">
               <span style="display:inline-flex; align-items:center;">Most Watched Actors
@@ -609,8 +705,12 @@
 
       <!-- SOURCES -->
       <div>
-        <p class="section-title">Source Data</p>
-        <div class="charts-grid">
+        <p class="section-title" onclick="toggleSection(this)">
+          <span class="section-chevron collapsed">🡣</span>
+          Source Data
+        </p>
+        <div class="section-body collapsed">
+          <div class="charts-grid">
           <div class="chart-card">
             <p class="chart-title">Watch Volume by Source
               <span class="tooltip-wrap">
@@ -629,8 +729,12 @@
 
       <!-- WATCH STATUS -->
       <div>
-        <p class="section-title">Watch Status Data</p>
-        <div class="charts-grid">
+        <p class="section-title" onclick="toggleSection(this)">
+          <span class="section-chevron collapsed">🡣</span>
+          Watch Status Data
+        </p>
+        <div class="section-body collapsed">
+          <div class="charts-grid">
           <div class="chart-card">
             <p class="chart-title">Rewatch Rate
               <span class="tooltip-wrap">
@@ -649,8 +753,12 @@
 
       <!-- RATINGS -->
       <div>
-        <p class="section-title">Ratings Data</p>
-        <div class="charts-grid">
+        <p class="section-title" onclick="toggleSection(this)">
+          <span class="section-chevron collapsed">🡣</span>
+          Ratings Data
+        </p>
+        <div class="section-body collapsed">
+          <div class="charts-grid">
           <div class="chart-card wide">
             <p class="chart-title">Rating Distribution
               <span class="tooltip-wrap">
@@ -673,8 +781,12 @@
 
       <!-- WATCH VOLUME DATA -->
       <div>
-        <p class="section-title">Watch Volume Data</p>
-        <div class="charts-grid">
+        <p class="section-title" onclick="toggleSection(this)">
+          <span class="section-chevron collapsed">🡣</span>
+          Volume Data
+        </p>
+        <div class="section-body collapsed">
+          <div class="charts-grid">
           <div class="chart-card wide">
             <p class="chart-title">Watch Volume by Month</p>
             <div class="chart-wrap"><canvas id="chart-timeline"></canvas></div>
@@ -692,8 +804,12 @@
 
       <!-- MORE FUN STUFF -->
       <div>
-        <p class="section-title">More Fun Stuff</p>
-        <div class="charts-grid">
+        <p class="section-title" onclick="toggleSection(this)">
+          <span class="section-chevron collapsed">🡣</span>
+          More Fun Stuff
+        </p>
+        <div class="section-body collapsed">
+          <div class="charts-grid">
           <div class="chart-card">
             <p class="chart-title">Release Year Punch Card
               <span class="tooltip-wrap">
@@ -711,45 +827,6 @@
               </span>
             </p>
             <div class="chart-wrap"><canvas id="chart-runtime-sweetspot"></canvas></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- HIGHEST RATED TABLE -->
-      <div>
-        <div style="display:flex; align-items:center; margin-bottom:20px; margin-top:40px; gap:16px;">
-          <p class="section-title" style="margin:0; flex:1;">Top Movies of the Year</p>
-          <span style="display:flex; gap:0; flex-shrink:0;">
-            <button id="table-toggle-new" onclick="toggleMovieTable('new')" style="
-              background: var(--text); color: var(--bg);
-              border: none; border-radius: 4px 0 0 4px;
-              font-family: 'Inter', sans-serif; font-size: 0.6rem;
-              font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
-              padding: 4px 10px; cursor: pointer;">First Watch</button>
-            <button id="table-toggle-rewatch" onclick="toggleMovieTable('rewatch')" style="
-              background: var(--surface2); color: var(--text-muted);
-              border: none; border-radius: 0 4px 4px 0;
-              font-family: 'Inter', sans-serif; font-size: 0.6rem;
-              font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
-              padding: 4px 10px; cursor: pointer;">Rewatch</button>
-          </span>
-        </div>
-        <div class="chart-card">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Movie Title</th>
-                  <th>Director</th>
-                  <th>Year</th>
-                  <th>Genre(s)</th>
-                  <th>Source</th>
-                  <th>Rating</th>
-                </tr>
-              </thead>
-              <tbody id="top-movies-body"></tbody>
-            </table>
           </div>
         </div>
       </div>
@@ -775,7 +852,8 @@
     runtime:      "Runtime (minutes)",
     genres:       "Genres (Letterboxd)",
     rating:       "Rating",
-    actors:       "Actors"
+    actors:       "Actors",
+    posterPath:   "Poster Path"
   };
 
   const PALETTE = [
@@ -1694,8 +1772,8 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
       }
     });
 
-    // ── HIGHEST RATED MOVIES TABLE ────────────────────────
-    const tb = document.getElementById('top-movies-body');
+    // ── HIGHEST RATED MOVIES POSTER GRID ─────────────────────
+    const posterGrid = document.getElementById('movie-poster-grid');
 
     const dedupedFirstWatches = (() => {
       const seen = new Set();
@@ -1707,7 +1785,7 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
           seen.add(r[COL.title]);
           return true;
         })
-        .slice(0, 15);
+        .slice(0, 14);
     })();
 
     const dedupedRewatches = (() => {
@@ -1720,36 +1798,74 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
           seen.add(r[COL.title]);
           return true;
         })
-        .slice(0, 15);
+        .slice(0, 14);
     })();
 
-    function renderMovieTable(data) {
-      tb.innerHTML = '';
-      data.forEach((r, i) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${i + 1}</td>
-          <td><strong>${r[COL.title] || '—'}</strong></td>
-          <td>${r[COL.director] || '—'}</td>
-          <td>${r[COL.year] || '—'}</td>
-          <td>${r[COL.genres] || '—'}</td>
-          <td>${r[COL.source] || '—'}</td>
-          <td><span class="rating-badge">${r[COL.rating]}</span></td>`;
-        tb.appendChild(tr);
+    function renderPosterGrid(data) {
+      posterGrid.innerHTML = '';
+
+      data.forEach(r => {
+        const card = document.createElement('div');
+        card.className = 'movie-poster-card';
+
+        const posterPath = r[COL.posterPath];
+        if (posterPath) {
+          const img = document.createElement('img');
+          img.className = 'movie-poster-img';
+          img.src = `https://image.tmdb.org/t/p/w300${posterPath}`;
+          img.alt = r[COL.title];
+          img.loading = 'lazy';
+          card.appendChild(img);
+        } else {
+          const placeholder = document.createElement('div');
+          placeholder.className = 'movie-poster-placeholder';
+          placeholder.textContent = r[COL.title] || '—';
+          card.appendChild(placeholder);
+        }
+
+        const info = document.createElement('div');
+        info.className = 'movie-poster-info';
+        info.innerHTML = `
+          <div class="movie-poster-title">${r[COL.title] || '—'}</div>
+          <div class="movie-poster-meta">${r[COL.year] || '—'} · ${r[COL.director] || '—'}</div>
+          <span class="movie-poster-rating">${r[COL.rating]}<span style="font-weight:400;">/10</span></span>`;
+        card.appendChild(info);
+
+        posterGrid.appendChild(card);
       });
     }
 
     window.toggleMovieTable = function(mode) {
       const isRewatch = mode === 'rewatch';
-      renderMovieTable(isRewatch ? dedupedRewatches : dedupedFirstWatches);
+      renderPosterGrid(isRewatch ? dedupedRewatches : dedupedFirstWatches);
       document.getElementById('table-toggle-new').style.background     = isRewatch ? 'var(--surface2)' : 'var(--text)';
       document.getElementById('table-toggle-new').style.color          = isRewatch ? 'var(--text-muted)' : 'var(--bg)';
       document.getElementById('table-toggle-rewatch').style.background = isRewatch ? 'var(--text)' : 'var(--surface2)';
       document.getElementById('table-toggle-rewatch').style.color      = isRewatch ? 'var(--bg)' : 'var(--text-muted)';
     };
 
-    renderMovieTable(dedupedFirstWatches);
+    renderPosterGrid(dedupedFirstWatches);
+   }
+
+  // ── SECTION COLLAPSING ───────────────────────────────────
+  function toggleSection(titleEl) {
+    const body    = titleEl.nextElementSibling;
+    const chevron = titleEl.querySelector('.section-chevron');
+    const isCollapsed = body.classList.contains('collapsed');
+
+    if (isCollapsed) {
+      body.classList.remove('collapsed');
+      chevron.classList.remove('collapsed');
+    } else {
+      body.classList.add('collapsed');
+      chevron.classList.add('collapsed');
+    }
   }
+
+
+function toggleSectionByBody(body) {
+  body.classList.toggle('collapsed');
+}
 </script>
 </body>
 </html>
