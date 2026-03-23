@@ -7,6 +7,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
 
@@ -256,10 +257,7 @@
 
     .tooltip-box {
       display: none;
-      position: absolute;
-      top: calc(100% + 8px);
-      left: 0;
-      transform: translateX(-50%);
+      position: fixed;
       width: 220px;
       background: var(--surface2);
       border: 1px solid var(--border);
@@ -273,11 +271,8 @@
       letter-spacing: 0;
       text-transform: none;
       text-align: left;
-      z-index: 100;
-    }
-
-    .tooltip-wrap:hover .tooltip-box {
-      display: block;
+      z-index: 1000;
+      pointer-events: none;
     }
 
     .chart-wrap.tall {
@@ -374,11 +369,12 @@
     }
 
     .section-chevron {
-      font-size: 1.5rem;
-      color: var(--text);
-      transition: transform 0.25s ease;
-      flex-shrink: 0;
-    }
+  font-size: 1.8rem;
+  color: var(--text);
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+}
 
     .section-chevron.collapsed {
       transform: rotate(-90deg);
@@ -462,6 +458,27 @@
     display: inline-block;
     align-self: flex-start;
   }
+
+  /* TOGGLE BUTTONS */
+    .toggle-btn {
+    border: 2px solid var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 6px 8px;
+    cursor: pointer;
+  }
+
+  .toggle-btn.active {
+    background: var(--text);
+    color: var(--bg);
+  }
+
+  .toggle-btn.inactive {
+    background: var(--surface);
+    color: var(--text);
+  }
           
   </style>
 </head>
@@ -489,7 +506,7 @@
       <!-- THE BIG PICTURE -->
       <div>
         <p class="section-title" onclick="toggleSection(this)">
-          <span class="section-chevron">🡣</span>
+          <span class="section-chevron material-symbols-outlined">expand_circle_down</span>
           The Big Picture
         </p>
         <div class="section-body">
@@ -534,27 +551,47 @@
 
       <!-- HIGHEST RATED TABLE -->
       <div>
-        <div style="display:flex; align-items:center; margin-bottom:20px; margin-top:40px; gap:16px; cursor:pointer; user-select:none;" onclick="toggleSectionByBody(this.nextElementSibling); this.querySelector('.section-chevron').classList.toggle('collapsed');">
-          <p class="section-title" style="margin:0; flex:1; cursor:pointer;">
-            <span class="section-chevron">🡣</span>
-            Top Movies of the Year
-          </p>
-          <span style="display:flex; gap:0; flex-shrink:0;" onclick="event.stopPropagation();">
-            <button id="table-toggle-new" onclick="toggleMovieTable('new')" style="
-              background: var(--text); color: var(--bg);
-              border: none; border-radius: 4px 0 0 4px;
-              font-family: 'Inter', sans-serif; font-size: 0.6rem;
-              font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
-              padding: 4px 10px; cursor: pointer;">First Watch</button>
-            <button id="table-toggle-rewatch" onclick="toggleMovieTable('rewatch')" style="
-              background: var(--surface2); color: var(--text-muted);
-              border: none; border-radius: 0 4px 4px 0;
-              font-family: 'Inter', sans-serif; font-size: 0.6rem;
-              font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
-              padding: 4px 10px; cursor: pointer;">Rewatch</button>
-          </span>
-        </div>
+        <p class="section-title" onclick="toggleSection(this)">
+          <span class="section-chevron material-symbols-outlined">expand_circle_down</span>
+          Top Movies of the Year
+        </p>
         <div class="section-body">
+          <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+            <select id="filter-watchstatus" onchange="applyPosterFilters()" style="
+              background: var(--surface); color: var(--text);
+              border: 1px solid var(--border); border-radius: 4px;
+              font-family: 'Inter', sans-serif; font-size: 0.75rem;
+              font-weight: 500; padding: 8px 12px; cursor: pointer; outline: none;">
+              <option value="all">All</option>
+              <option value="new">First Watches</option>
+              <option value="rewatch">Rewatches</option>
+            </select>
+            <select id="filter-genre" onchange="applyPosterFilters()" style="
+              background: var(--surface); color: var(--text);
+              border: 1px solid var(--border); border-radius: 4px;
+              font-family: 'Inter', sans-serif; font-size: 0.75rem;
+              font-weight: 500; padding: 8px 12px; cursor: pointer; outline: none;">
+              <option value="all">All Genres</option>
+              <option>Action</option>
+              <option>Adventure</option>
+              <option>Animation</option>
+              <option>Comedy</option>
+              <option>Crime</option>
+              <option>Documentary</option>
+              <option>Drama</option>
+              <option>Family</option>
+              <option>Fantasy</option>
+              <option>History</option>
+              <option>Horror</option>
+              <option>Music</option>
+              <option>Mystery</option>
+              <option>Romance</option>
+              <option>Science Fiction</option>
+              <option>Thriller</option>
+              <option>War</option>
+              <option>Western</option>
+            </select>
+          </div>
           <div id="movie-poster-grid" style="
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -570,7 +607,7 @@
       <!-- GENRES -->
       <div>
         <p class="section-title" onclick="toggleSection(this)">
-          <span class="section-chevron collapsed">🡣</span>
+          <span class="section-chevron material-symbols-outlined collapsed">expand_circle_down</span>
           Genre Data
         </p>
         <div class="section-body collapsed">
@@ -584,18 +621,8 @@
                 </span>
               </span>
               <span style="display:flex; gap:0;">
-                <button id="genre-toggle-count" onclick="toggleGenreChart('count')" style="
-                  background: var(--text); color: var(--bg);
-                  border: none; border-radius: 4px 0 0 4px;
-                  font-family: 'Inter', sans-serif; font-size: 0.6rem;
-                  font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
-                  padding: 4px 10px; cursor: pointer;">Watches</button>
-                <button id="genre-toggle-runtime" onclick="toggleGenreChart('runtime')" style="
-                  background: var(--surface2); color: var(--text-muted);
-                  border: none; border-radius: 0 4px 4px 0;
-                  font-family: 'Inter', sans-serif; font-size: 0.6rem;
-                  font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
-                  padding: 4px 10px; cursor: pointer;">Runtime</button>
+                <button id="genre-toggle-count" onclick="toggleGenreChart('count')" class="toggle-btn active">Watches</button>
+                <button id="genre-toggle-runtime" onclick="toggleGenreChart('runtime')" class="toggle-btn inactive">Runtime</button>
               </span>
             </p>
             <div class="chart-wrap tall"><canvas id="chart-genre-combined"></canvas></div>
@@ -616,7 +643,7 @@
       <!-- DIRECTORS -->
       <div>
         <p class="section-title" onclick="toggleSection(this)">
-          <span class="section-chevron collapsed">🡣</span>
+          <span class="section-chevron material-symbols-outlined collapsed">expand_circle_down</span>
           Director Data
         </p>
         <div class="section-body collapsed">
@@ -630,18 +657,8 @@
                 </span>
               </span>
               <span style="display:flex; gap:0;">
-                <button id="director-toggle-count" onclick="toggleDirectorChart('count')" style="
-                  background: var(--text); color: var(--bg);
-                  border: none; border-radius: 4px 0 0 4px;
-                  font-family: 'Inter', sans-serif; font-size: 0.6rem;
-                  font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
-                  padding: 4px 10px; cursor: pointer;">Watches</button>
-                <button id="director-toggle-runtime" onclick="toggleDirectorChart('runtime')" style="
-                  background: var(--surface2); color: var(--text-muted);
-                  border: none; border-radius: 0 4px 4px 0;
-                  font-family: 'Inter', sans-serif; font-size: 0.6rem;
-                  font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
-                  padding: 4px 10px; cursor: pointer;">Runtime</button>
+                <button id="director-toggle-count" onclick="toggleDirectorChart('count')" class="toggle-btn active">Watches</button>
+                <button id="director-toggle-runtime" onclick="toggleDirectorChart('runtime')" class="toggle-btn inactive">Runtime</button>
               </span>
             </p>
             <div class="chart-wrap tall"><canvas id="chart-directors-combined"></canvas></div>
@@ -661,7 +678,7 @@
       <!-- ACTORS -->
       <div>
         <p class="section-title" onclick="toggleSection(this)">
-          <span class="section-chevron collapsed">🡣</span>
+          <span class="section-chevron material-symbols-outlined collapsed">expand_circle_down</span>
           Actor Data
         </p>
         <div class="section-body collapsed">
@@ -675,18 +692,8 @@
                 </span>
               </span>
               <span style="display:flex; gap:0;">
-                <button id="actor-toggle-count" onclick="toggleActorChart('count')" style="
-                  background: var(--text); color: var(--bg);
-                  border: none; border-radius: 4px 0 0 4px;
-                  font-family: 'Inter', sans-serif; font-size: 0.6rem;
-                  font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
-                  padding: 4px 10px; cursor: pointer;">Watches</button>
-                <button id="actor-toggle-runtime" onclick="toggleActorChart('runtime')" style="
-                  background: var(--surface2); color: var(--text-muted);
-                  border: none; border-radius: 0 4px 4px 0;
-                  font-family: 'Inter', sans-serif; font-size: 0.6rem;
-                  font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
-                  padding: 4px 10px; cursor: pointer;">Runtime</button>
+                <button id="actor-toggle-count" onclick="toggleActorChart('count')" class="toggle-btn active">Watches</button>
+                <button id="actor-toggle-runtime" onclick="toggleActorChart('runtime')" class="toggle-btn inactive">Runtime</button>
               </span>
             </p>
             <div class="chart-wrap tall"><canvas id="chart-actors-combined"></canvas></div>
@@ -706,7 +713,7 @@
       <!-- SOURCES -->
       <div>
         <p class="section-title" onclick="toggleSection(this)">
-          <span class="section-chevron collapsed">🡣</span>
+          <span class="section-chevron material-symbols-outlined collapsed">expand_circle_down</span>
           Source Data
         </p>
         <div class="section-body collapsed">
@@ -730,7 +737,7 @@
       <!-- WATCH STATUS -->
       <div>
         <p class="section-title" onclick="toggleSection(this)">
-          <span class="section-chevron collapsed">🡣</span>
+          <span class="section-chevron material-symbols-outlined collapsed">expand_circle_down</span>
           Watch Status Data
         </p>
         <div class="section-body collapsed">
@@ -754,7 +761,7 @@
       <!-- RATINGS -->
       <div>
         <p class="section-title" onclick="toggleSection(this)">
-          <span class="section-chevron collapsed">🡣</span>
+          <span class="section-chevron material-symbols-outlined collapsed">expand_circle_down</span>
           Ratings Data
         </p>
         <div class="section-body collapsed">
@@ -782,7 +789,7 @@
       <!-- WATCH VOLUME DATA -->
       <div>
         <p class="section-title" onclick="toggleSection(this)">
-          <span class="section-chevron collapsed">🡣</span>
+          <span class="section-chevron material-symbols-outlined collapsed">expand_circle_down</span>
           Volume Data
         </p>
         <div class="section-body collapsed">
@@ -805,7 +812,7 @@
       <!-- MORE FUN STUFF -->
       <div>
         <p class="section-title" onclick="toggleSection(this)">
-          <span class="section-chevron collapsed">🡣</span>
+          <span class="section-chevron material-symbols-outlined collapsed">expand_circle_down</span>
           More Fun Stuff
         </p>
         <div class="section-body collapsed">
@@ -1093,10 +1100,10 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
 
       genreChart.update();
 
-      document.getElementById('genre-toggle-count').style.background   = isRuntime ? 'var(--surface2)' : 'var(--text)';
-      document.getElementById('genre-toggle-count').style.color        = isRuntime ? 'var(--text-muted)' : 'var(--bg)';
-      document.getElementById('genre-toggle-runtime').style.background = isRuntime ? 'var(--text)' : 'var(--surface2)';
-      document.getElementById('genre-toggle-runtime').style.color      = isRuntime ? 'var(--bg)' : 'var(--text-muted)';
+      document.getElementById('genre-toggle-count').classList.toggle('active', !isRuntime);
+      document.getElementById('genre-toggle-count').classList.toggle('inactive', isRuntime);
+      document.getElementById('genre-toggle-runtime').classList.toggle('active', isRuntime);
+      document.getElementById('genre-toggle-runtime').classList.toggle('inactive', !isRuntime);
     };
 
     // ── MOST WATCHED ACTORS — COMBINED (bar) ──────────────────
@@ -1183,10 +1190,10 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
 
       actorChart.update();
 
-      document.getElementById('actor-toggle-count').style.background   = isRuntime ? 'var(--surface2)' : 'var(--text)';
-      document.getElementById('actor-toggle-count').style.color        = isRuntime ? 'var(--text-muted)' : 'var(--bg)';
-      document.getElementById('actor-toggle-runtime').style.background = isRuntime ? 'var(--text)' : 'var(--surface2)';
-      document.getElementById('actor-toggle-runtime').style.color      = isRuntime ? 'var(--bg)' : 'var(--text-muted)';
+      document.getElementById('actor-toggle-count').classList.toggle('active', !isRuntime);
+      document.getElementById('actor-toggle-count').classList.toggle('inactive', isRuntime);
+      document.getElementById('actor-toggle-runtime').classList.toggle('active', isRuntime);
+      document.getElementById('actor-toggle-runtime').classList.toggle('inactive', !isRuntime);
     };
 
     // ── HIGHEST RATED ACTORS (ranked list) ────────────────
@@ -1322,10 +1329,10 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
 
       directorChart.update();
 
-      document.getElementById('director-toggle-count').style.background   = isRuntime ? 'var(--surface2)' : 'var(--text)';
-      document.getElementById('director-toggle-count').style.color        = isRuntime ? 'var(--text-muted)' : 'var(--bg)';
-      document.getElementById('director-toggle-runtime').style.background = isRuntime ? 'var(--text)' : 'var(--surface2)';
-      document.getElementById('director-toggle-runtime').style.color      = isRuntime ? 'var(--bg)' : 'var(--text-muted)';
+      document.getElementById('director-toggle-count').classList.toggle('active', !isRuntime);
+      document.getElementById('director-toggle-count').classList.toggle('inactive', isRuntime);
+      document.getElementById('director-toggle-runtime').classList.toggle('active', isRuntime);
+      document.getElementById('director-toggle-runtime').classList.toggle('inactive', !isRuntime);
     };
 
     // ── HIGHEST RATED DIRECTORS (ranked list) ─────────────
@@ -1775,35 +1782,24 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
     // ── HIGHEST RATED MOVIES POSTER GRID ─────────────────────
     const posterGrid = document.getElementById('movie-poster-grid');
 
-    const dedupedFirstWatches = (() => {
-      const seen = new Set();
-      return rated
-        .filter(r => (r[COL.newOrRewatch] || '').toLowerCase().includes('new'))
-        .sort((a, b) => +b[COL.rating] - +a[COL.rating])
-        .filter(r => {
-          if (seen.has(r[COL.title])) return false;
-          seen.add(r[COL.title]);
-          return true;
-        })
-        .slice(0, 14);
-    })();
-
-    const dedupedRewatches = (() => {
-      const seen = new Set();
-      return rated
-        .filter(r => (r[COL.newOrRewatch] || '').toLowerCase().includes('rewatch'))
-        .sort((a, b) => +b[COL.rating] - +a[COL.rating])
-        .filter(r => {
-          if (seen.has(r[COL.title])) return false;
-          seen.add(r[COL.title]);
-          return true;
-        })
-        .slice(0, 14);
+    // Pool of all rated movies, deduped by title (highest rating wins), sorted by rating
+    const allRatedDeduped = (() => {
+      const best = {};
+      rated.forEach(r => {
+        const t = r[COL.title];
+        if (!best[t] || +r[COL.rating] > +best[t][COL.rating]) best[t] = r;
+      });
+      return Object.values(best).sort((a, b) => +b[COL.rating] - +a[COL.rating]);
     })();
 
     function renderPosterGrid(data) {
       posterGrid.innerHTML = '';
-
+      if (!data.length) {
+        posterGrid.style.background = 'transparent';
+        posterGrid.innerHTML = `<div style="padding:32px; color:var(--text-muted); font-size:0.85rem; font-family:'Inter',sans-serif;">No movies match the selected filters.</div>`;
+        return;
+      }
+      posterGrid.style.background = 'var(--border)';
       data.forEach(r => {
         const card = document.createElement('div');
         card.className = 'movie-poster-card';
@@ -1835,16 +1831,25 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
       });
     }
 
-    window.toggleMovieTable = function(mode) {
-      const isRewatch = mode === 'rewatch';
-      renderPosterGrid(isRewatch ? dedupedRewatches : dedupedFirstWatches);
-      document.getElementById('table-toggle-new').style.background     = isRewatch ? 'var(--surface2)' : 'var(--text)';
-      document.getElementById('table-toggle-new').style.color          = isRewatch ? 'var(--text-muted)' : 'var(--bg)';
-      document.getElementById('table-toggle-rewatch').style.background = isRewatch ? 'var(--text)' : 'var(--surface2)';
-      document.getElementById('table-toggle-rewatch').style.color      = isRewatch ? 'var(--bg)' : 'var(--text-muted)';
+    window.applyPosterFilters = function() {
+      const statusFilter = document.getElementById('filter-watchstatus').value;
+      const genreFilter  = document.getElementById('filter-genre').value;
+
+      const filtered = allRatedDeduped.filter(r => {
+        const statusOk = statusFilter === 'all'
+          || (statusFilter === 'new'     && (r[COL.newOrRewatch] || '').toLowerCase().includes('new'))
+          || (statusFilter === 'rewatch' && (r[COL.newOrRewatch] || '').toLowerCase().includes('rewatch'));
+
+        const genreOk = genreFilter === 'all'
+          || (r[COL.genres] || '').split(',').map(g => g.trim()).includes(genreFilter);
+
+        return statusOk && genreOk;
+      }).slice(0, 14);
+
+      renderPosterGrid(filtered);
     };
 
-    renderPosterGrid(dedupedFirstWatches);
+    renderPosterGrid(allRatedDeduped.slice(0, 14));
    }
 
   // ── SECTION COLLAPSING ───────────────────────────────────
@@ -1866,6 +1871,42 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
 function toggleSectionByBody(body) {
   body.classList.toggle('collapsed');
 }
+
+// ── FIXED TOOLTIP POSITIONING ────────────────────────────
+(function () {
+  const margin = 8;
+
+  document.querySelectorAll('.tooltip-wrap').forEach(wrap => {
+    const trigger = wrap.querySelector('.tooltip-trigger');
+    const box     = wrap.querySelector('.tooltip-box');
+    if (!trigger || !box) return;
+
+    trigger.addEventListener('mouseenter', () => {
+      box.style.display = 'block';
+      const tr  = trigger.getBoundingClientRect();
+      const bw  = box.offsetWidth;
+      const bh  = box.offsetHeight;
+      const vw  = window.innerWidth;
+      const vh  = window.innerHeight;
+
+      // Prefer below, fall back to above
+      let top = tr.bottom + margin;
+      if (top + bh > vh - margin) top = tr.top - bh - margin;
+
+      // Centre on trigger, clamp to viewport
+      let left = tr.left + tr.width / 2 - bw / 2;
+      left = Math.max(margin, Math.min(left, vw - bw - margin));
+
+      box.style.top  = `${top}px`;
+      box.style.left = `${left}px`;
+    });
+
+    trigger.addEventListener('mouseleave', () => {
+      box.style.display = 'none';
+    });
+  });
+})();
+
 </script>
 </body>
 </html>
