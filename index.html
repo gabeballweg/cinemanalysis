@@ -37,7 +37,7 @@
     /* ── HEADER ───────────────────────────────────────── */
     header {
       text-align: center;
-      padding: 64px 20px 48px;
+      padding: 24px 48px;
       border-bottom: 1px solid var(--border);
     }
 
@@ -55,7 +55,7 @@
       font-weight: 400;
       color: var(--text-muted);
       font-size: 0.8rem;
-      margin-top: 18px;
+      margin-top: 12px;
       letter-spacing: 0.05em;
       text-transform: uppercase;
     }
@@ -64,7 +64,7 @@
     main {
       max-width: 1300px;
       margin: 0 auto;
-      padding: 48px 24px 80px;
+      padding: 12px 24px 24px 48px;
       display: flex;
       flex-direction: column;
       gap: 48px;
@@ -79,7 +79,7 @@
       letter-spacing: none;
       text-transform: none;
       margin-bottom: 20px;
-      margin-top: 40px;
+      margin-top: 36px;
       display: flex;
       align-items: center;
       gap: 16px;
@@ -549,13 +549,43 @@
       </div>
       </div>
 
-      <!-- HIGHEST RATED TABLE -->
+      <!-- RECENTLY WATCHED -->
       <div>
         <p class="section-title" onclick="toggleSection(this)">
           <span class="section-chevron material-symbols-outlined">expand_circle_down</span>
-          Top Movies of the Year
+          Recently Watched
         </p>
         <div class="section-body">
+          <div id="recent-status-bar" style="
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+          "></div>
+          <div id="recent-poster-grid" style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+          "></div>
+        </div>
+      </div>
+
+      <!-- HIGHEST RATED TABLE -->
+      <div>
+        <p class="section-title" onclick="toggleSection(this)">
+          <span class="section-chevron material-symbols-outlined collapsed">expand_circle_down</span>
+          Top Movies of the Year
+        </p>
+        <div class="section-body collapsed">
           <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
             <select id="filter-watchstatus" onchange="applyPosterFilters()" style="
               background: var(--surface); color: var(--text);
@@ -842,7 +872,7 @@
   </main><!-- /#page-data -->
 
   <!-- ── FOOTER ─────────────────────────────────────────── -->
-  <footer>Last refreshed: <span id="last-updated">—</span> &nbsp;·&nbsp; Movie metadata sourced via the <a href="https://www.themoviedb.org/" target="_blank" style="color: var(--text);">TMDB</a> API</footer>
+  <footer>Last refreshed: <span id="last-updated">—</span></footer>
 
 <script>
   // ── CONFIG ──────────────────────────────────────────────
@@ -1848,6 +1878,68 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
 
       renderPosterGrid(filtered);
     };
+
+    // ── RECENTLY WATCHED ─────────────────────────────────────
+    const recentGrid = document.getElementById('recent-poster-grid');
+
+    const recentMovies = [...rows]
+      .filter(r => r[COL.dateWatched] || r[COL.timestamp])
+      .sort((a, b) => {
+        const da = new Date(a[COL.dateWatched] || a[COL.timestamp]);
+        const db = new Date(b[COL.dateWatched] || b[COL.timestamp]);
+        return db - da;
+      })
+      .slice(0, 6);
+
+    recentMovies.forEach(r => {
+      const card = document.createElement('div');
+      card.className = 'movie-poster-card';
+
+      const posterPath = r[COL.posterPath];
+      if (posterPath) {
+        const img = document.createElement('img');
+        img.className = 'movie-poster-img';
+        img.src = `https://image.tmdb.org/t/p/w300${posterPath}`;
+        img.alt = r[COL.title];
+        img.loading = 'lazy';
+        card.appendChild(img);
+      } else {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'movie-poster-placeholder';
+        placeholder.textContent = r[COL.title] || '—';
+        card.appendChild(placeholder);
+      }
+
+      const info = document.createElement('div');
+      info.className = 'movie-poster-info';
+      info.innerHTML = `
+        <div class="movie-poster-title">${r[COL.title] || '—'}</div>
+        <div class="movie-poster-meta">${r[COL.year] || '—'} · ${r[COL.director] || '—'}</div>
+        ${r[COL.rating] ? `<span class="movie-poster-rating">${r[COL.rating]}<span style="font-weight:400;">/10</span></span>` : ''}`;
+      card.appendChild(info);
+
+      recentGrid.appendChild(card);
+    });
+
+    // ── RECENT STATUS BAR ─────────────────────────────────────
+    const recentRated  = recentMovies.filter(r => r[COL.rating] && !isNaN(+r[COL.rating]));
+    const recentAvg    = recentRated.length
+      ? recentRated.reduce((sum, r) => sum + +r[COL.rating], 0) / recentRated.length
+      : null;
+
+    if (recentAvg !== null) {
+      let label, bg, color;
+      if      (recentAvg < 4.5)  { label = 'Major Flops';     bg = '#C04444'; color = 'var(--text)'; }
+      else if (recentAvg < 6.0)  { label = 'Rough Patch'; bg = '#C06A30'; color = 'var(--text)'; }
+      else if (recentAvg < 7.5)  { label = 'Solid Run';     bg = '#B8922A'; color = 'var(--bg)'; }
+      else if (recentAvg < 8.5)  { label = 'On A Heater';   bg = '#3d8a5a'; color = 'var(--text)'; }
+      else                        { label = 'Going Nuclear';  bg = '#6A3D9E'; color = 'var(--text)'; }
+
+      const bar = document.getElementById('recent-status-bar');
+      bar.style.background = bg;
+      bar.style.color      = color;
+      bar.innerHTML        = `${label}<span style="font-weight:400;"> - ${recentAvg.toFixed(1)} average rating over the last 6 movies</span>`;
+    }
 
     renderPosterGrid(allRatedDeduped.slice(0, 14));
    }
