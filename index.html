@@ -64,7 +64,7 @@
     main {
       max-width: 1300px;
       margin: 0 auto;
-      padding: 12px 24px 24px 48px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
       gap: 48px;
@@ -138,7 +138,7 @@
 
     .chart-card {
       background: var(--surface);
-      padding: 28px;
+      padding: 20px;
     }
 
     .chart-card.wide {
@@ -559,9 +559,8 @@
           <div id="recent-status-bar" style="
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
             padding: 6px 14px;
-            border-radius: 4px;
             margin-bottom: 16px;
             font-family: 'Inter', sans-serif;
             font-size: 0.75rem;
@@ -569,7 +568,7 @@
           "></div>
           <div id="recent-poster-grid" style="
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 1px;
             background: var(--border);
             border: 1px solid var(--border);
@@ -624,7 +623,7 @@
           </div>
           <div id="movie-poster-grid" style="
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             gap: 1px;
             background: var(--border);
             border: 1px solid var(--border);
@@ -658,10 +657,16 @@
             <div class="chart-wrap tall"><canvas id="chart-genre-combined"></canvas></div>
           </div>
           <div class="chart-card">
-            <p class="chart-title">Highest Rated Genres
-              <span class="tooltip-wrap">
-                <span class="tooltip-trigger">?</span>
-                <span class="tooltip-box">A genre must be watched at least 3 times to be included. Genre data sourced from TMDB.</span>
+            <p class="chart-title" style="justify-content:space-between;">
+              <span style="display:inline-flex; align-items:center;">Highest Rated Genres
+                <span class="tooltip-wrap">
+                  <span class="tooltip-trigger">?</span>
+                  <span class="tooltip-box">Single: a genre must be watched at least 3 times. Combos: a genre pairing must be watched at least 2 times. Genre data sourced from TMDB.</span>
+                </span>
+              </span>
+              <span style="display:flex; gap:0;">
+                <button id="genre-rating-toggle-single" onclick="toggleGenreRatingList('single')" class="toggle-btn active">Single</button>
+                <button id="genre-rating-toggle-combined" onclick="toggleGenreRatingList('combined')" class="toggle-btn inactive">Combo</button>
               </span>
             </p>
             <ol id="top-genres-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:24px; margin-top:8px;"></ol>
@@ -694,7 +699,7 @@
             <div class="chart-wrap tall"><canvas id="chart-directors-combined"></canvas></div>
           </div>
           <div class="chart-card">
-            <p class="chart-title">Highest Rated Directors
+            <p class="chart-title">Director Rankings by Movie Ratings
               <span class="tooltip-wrap">
                 <span class="tooltip-trigger">?</span>
                 <span class="tooltip-box">A director must be watched at least 2 times to be included.</span>
@@ -729,7 +734,7 @@
             <div class="chart-wrap tall"><canvas id="chart-actors-combined"></canvas></div>
           </div>
           <div class="chart-card">
-            <p class="chart-title">Highest Rated Actors
+            <p class="chart-title">Actor Rankings by Movie Ratings
                 <span class="tooltip-wrap">
                 <span class="tooltip-trigger">?</span>
                 <span class="tooltip-box">The first ten billed actors for each movie are counted. Actors must be watched at least 3 times to be included. Actor data sourced from TMDB.</span>
@@ -857,13 +862,22 @@
             <div id="punch-card"></div>
           </div>
           <div class="chart-card">
-            <p class="chart-title">Runtime by Average Rating
+            <p class="chart-title">My Perfect Movie
               <span class="tooltip-wrap">
                 <span class="tooltip-trigger">?</span>
-                <span class="tooltip-box">Average rating broken down by film runtime buckets.</span>
+                <span class="tooltip-box">Pulls top-rated genre pair, top-rated director, and top-3-rated actors data to illustrate a hypothetical perfect movie.</span>
               </span>
             </p>
-            <div class="chart-wrap"><canvas id="chart-runtime-sweetspot"></canvas></div>
+            <div id="ideal-movie-text" style="
+              padding: 1.5rem;
+              font-family: 'Inter', sans-serif;
+              font-size: 1.8rem;
+              font-weight: 200;
+              color: var(--text);
+              line-height: 1.4;
+              border: 2px solid #c45a7a;
+              border-radius: 0px;
+            "></div>
           </div>
         </div>
       </div>
@@ -1270,12 +1284,53 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
         genreRatings[g].count++;
       });
     });
-    const topGenres = Object.entries(genreRatings)
-      .filter(([, { count }]) => count >= 3)  
+    const topSingleGenres = Object.entries(genreRatings)
+      .filter(([, { count }]) => count >= 3)
       .map(([name, { total, count }]) => [name, (total / count).toFixed(1)])
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10);
-    makeRankedList('top-genres-list', topGenres, (name, avg) => `${avg} avg`);
+
+    const subgenreRatings = {};
+    rows.forEach(r => {
+      const rating = parseFloat(r[COL.rating]);
+      if (!rating) return;
+      const genres = (r[COL.genres] || '').split(',').map(g => g.trim()).filter(Boolean);
+      for (let i = 0; i < genres.length; i++) {
+        for (let j = i + 1; j < genres.length; j++) {
+          const pair = [genres[i], genres[j]].sort().join(' / ');
+          if (!subgenreRatings[pair]) subgenreRatings[pair] = { total: 0, count: 0 };
+          subgenreRatings[pair].total += rating;
+          subgenreRatings[pair].count++;
+        }
+      }
+    });
+
+    const topCombinedGenres = Object.entries(subgenreRatings)
+      .filter(([, { count }]) => count >= 2)
+      .map(([name, { total, count }]) => [name, (total / count).toFixed(1)])
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    function renderGenreRatingList(data) {
+      const list = document.getElementById('top-genres-list');
+      list.innerHTML = '';
+      if (!data.length) {
+        list.innerHTML = '<li style="color:var(--text-muted); font-size:0.85rem;">Not enough data yet.</li>';
+        return;
+      }
+      makeRankedList('top-genres-list', data, (name, avg) => `${avg} avg`);
+    }
+
+    window.toggleGenreRatingList = function(mode) {
+      const isCombined = mode === 'combined';
+      renderGenreRatingList(isCombined ? topCombinedGenres : topSingleGenres);
+      document.getElementById('genre-rating-toggle-single').classList.toggle('active', !isCombined);
+      document.getElementById('genre-rating-toggle-single').classList.toggle('inactive', isCombined);
+      document.getElementById('genre-rating-toggle-combined').classList.toggle('active', isCombined);
+      document.getElementById('genre-rating-toggle-combined').classList.toggle('inactive', !isCombined);
+    };
+
+    renderGenreRatingList(topSingleGenres);
 
     // ── MOST WATCHED DIRECTORS — COMBINED (bar) ───────────────
     const seenDirectorTitles = {};
@@ -1761,53 +1816,25 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
       sharedTooltip.style.left = `${left}px`;
     }
 
-    // ── RUNTIME SWEET SPOT (bar) ──────────────────────────────
-    const runtimeBuckets = {
-      '<90 min':      { total: 0, count: 0 },
-      '91–120 min':   { total: 0, count: 0 },
-      '121–150 min':  { total: 0, count: 0 },
-      '151–180 min':  { total: 0, count: 0 },
-      '>180 min':     { total: 0, count: 0 }
-    };
 
-    rows.forEach(r => {
-      const runtime = parseInt(r[COL.runtime]);
-      const rating  = parseFloat(r[COL.rating]);
-      if (!runtime || !rating) return;
-      if      (runtime <= 90)  runtimeBuckets['<90 min'].total      += rating, runtimeBuckets['<90 min'].count++;
-      else if (runtime <= 120) runtimeBuckets['91–120 min'].total   += rating, runtimeBuckets['91–120 min'].count++;
-      else if (runtime <= 150) runtimeBuckets['121–150 min'].total  += rating, runtimeBuckets['121–150 min'].count++;
-      else if (runtime <= 180) runtimeBuckets['151–180 min'].total  += rating, runtimeBuckets['151–180 min'].count++;
-      else                     runtimeBuckets['>180 min'].total     += rating, runtimeBuckets['>180 min'].count++;
-    });
 
-    const sweetspotLabels = Object.keys(runtimeBuckets);
-    const sweetspotData   = sweetspotLabels.map(k =>
-      runtimeBuckets[k].count > 0
-        ? parseFloat((runtimeBuckets[k].total / runtimeBuckets[k].count).toFixed(1))
-        : 0
-    );
+    // ── MY IDEAL MOVIE ────────────────────────────────────────
+    const idealGenrePair  = topCombinedGenres.length  ? topCombinedGenres[0][0]         : null;
+    const idealDirector   = topDirectorRatings.length ? topDirectorRatings[0][0]        : null;
+    const idealActor1     = topActorRatings.length    ? topActorRatings[0][0]           : null;
+    const idealActor2     = topActorRatings.length > 1 ? topActorRatings[1][0]          : null;
+    const idealActor3     = topActorRatings.length > 2 ? topActorRatings[2][0]          : null;
 
-    makeChart('chart-runtime-sweetspot', 'bar', sweetspotLabels, sweetspotData, {
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.raw} avg · ${runtimeBuckets[ctx.label].count} films`
-          }
-        }
-      },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
-        y: {
-          grid: { display: false },
-          min: 0,
-          max: 10,
-          ticks: { stepSize: 1, color: '#e8e8e8' },
-          border: { color: '#414141' }
-        }
-      }
-    });
+    function idealSpan(value) {
+      const display = value || '—';
+      if (!value) return `<span style="font-weight:600; color:var(--text-muted);">—</span>`;
+      return `<span style="font-weight:800; color:${PALETTE[2]};">${display}</span>`;
+    }
+
+    document.getElementById('ideal-movie-text').innerHTML =
+      `A ${idealSpan(idealGenrePair)} directed by ${idealSpan(idealDirector)} starring ${idealSpan(idealActor1)}, ${idealSpan(idealActor2)}, and  ${idealSpan(idealActor3)}.`;
+
+
 
     // ── HIGHEST RATED MOVIES POSTER GRID ─────────────────────
     const posterGrid = document.getElementById('movie-poster-grid');
@@ -1874,7 +1901,7 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
           || (r[COL.genres] || '').split(',').map(g => g.trim()).includes(genreFilter);
 
         return statusOk && genreOk;
-      }).slice(0, 14);
+      }).slice(0, 20);
 
       renderPosterGrid(filtered);
     };
@@ -1929,19 +1956,19 @@ document.getElementById('tooltip-streak').textContent = watchDates.length ? `${f
 
     if (recentAvg !== null) {
       let label, bg, color;
-      if      (recentAvg < 4.5)  { label = 'Major Flops';     bg = '#C04444'; color = 'var(--text)'; }
+      if      (recentAvg < 4.5)  { label = 'Major Flop';     bg = '#C04444'; color = 'var(--text)'; }
       else if (recentAvg < 6.0)  { label = 'Rough Patch'; bg = '#C06A30'; color = 'var(--text)'; }
-      else if (recentAvg < 7.5)  { label = 'Solid Run';     bg = '#B8922A'; color = 'var(--bg)'; }
+      else if (recentAvg < 7.5)  { label = 'Decent Run';     bg = '#B8922A'; color = 'var(--bg)'; }
       else if (recentAvg < 8.5)  { label = 'On A Heater';   bg = '#3d8a5a'; color = 'var(--text)'; }
       else                        { label = 'Going Nuclear';  bg = '#6A3D9E'; color = 'var(--text)'; }
 
       const bar = document.getElementById('recent-status-bar');
       bar.style.background = bg;
       bar.style.color      = color;
-      bar.innerHTML        = `${label}<span style="font-weight:400;"> - ${recentAvg.toFixed(1)} average rating over the last 6 movies</span>`;
+      bar.innerHTML        = `${label}<span style="font-weight:400;"> - ${recentAvg.toFixed(1)} average rating</span>`;
     }
 
-    renderPosterGrid(allRatedDeduped.slice(0, 14));
+    renderPosterGrid(allRatedDeduped.slice(0, 20));
    }
 
   // ── SECTION COLLAPSING ───────────────────────────────────
