@@ -2,17 +2,17 @@
 
 ## System Overview
 
-Cinemanalysis is a personal movie tracking dashboard with three main components that work together:
+Cinemanalysis is a dashboard that tracks personal movie-watching data with three main components that work together:
 
 - **`index.html`** — the dashboard, hosted on GitHub Pages, reads data from a Google Sheet and renders charts and stats
 - **`log.html`** — a custom logging form, also hosted on GitHub Pages, that uses the TMDB API to auto-fill movie metadata and submits entries to the Google Sheet via a Google Apps Script endpoint
 - **Google Apps Script** — a serverless endpoint deployed from within the Google Sheet that receives POST requests from `log.html` and appends rows to the sheet
 
 External services used:
-- **TMDB (The Movie Database)** — provides movie search autocomplete, and auto-fills title, director, runtime, genres, and cast
-- **Google Sheets** — the data store; published as a CSV that `index.html` fetches directly
-- **Google Apps Script** — the write endpoint that `log.html` posts to
-- **GitHub Pages** — hosts both HTML files
+- **TMDB (The Movie Database)** - provides movie search autocomplete, and auto-fills title, director, runtime, genres, and cast
+- **Google Sheets** - the data store; published as a CSV that `index.html` fetches directly
+- **Google Apps Script** - the write endpoint that `log.html` posts to
+- **GitHub Pages** - hosts both HTML files
 
 ---
 
@@ -32,8 +32,8 @@ External services used:
 1. User opens `log.html` and types a film title
 2. `log.html` queries the TMDB search API and displays matching results as an autocomplete dropdown
 3. User selects a film — `log.html` fetches full details and credits from TMDB, auto-filling title, year, director, runtime, genres, and top 10 billed actors into hidden fields
-4. User fills in the four manual fields: date watched, source, new or rewatch, and rating
-5. User clicks Submit — `log.html` POSTs a JSON payload to the Apps Script web app URL
+4. User fills in the four remaining fields manually: date watched, source, new or rewatch, and rating
+5. User clicks Submit - `log.html` POSTs a JSON payload to the Apps Script web app URL
 6. Apps Script receives the payload, parses it, and appends a new row to the Google Sheet
 7. The Google Sheet updates immediately
 
@@ -52,16 +52,16 @@ The Google Sheet has the following columns, in order. The `COL` object in `index
 | Column Header | COL Key | Source | Notes |
 |---|---|---|---|
 | Timestamp | `timestamp` | Auto (Apps Script) | `new Date()` at time of submission |
-| Movie Title | `title` | TMDB auto-fill | |
-| Date Watched | `dateWatched` | User input | Date picker field |
-| Source | `source` | User input | Dropdown selection |
-| New or Rewatch | `newOrRewatch` | User input | Dropdown: "New" or "Rewatch" |
-| Release Year | `year` | TMDB auto-fill | 4-digit year extracted from release date |
-| Director | `director` | TMDB auto-fill | First crew member with job "Director" |
-| Runtime (minutes) | `runtime` | TMDB auto-fill | Integer, in minutes |
-| Genres (Letterboxd) | `genres` | TMDB auto-fill | Comma-separated list of genre names |
-| Rating | `rating` | User input | Integer 1–10 |
-| Actors | `actors` | TMDB auto-fill | Top 10 billed cast members, comma-separated |
+| Movie Title | `title` | TMDB API auto-fill | |
+| Date Watched | `dateWatched` | Manual user input | Date picker field |
+| Source | `source` | Manual user input | Dropdown selection |
+| New or Rewatch | `newOrRewatch` | Manual user input | Dropdown: "New" or "Rewatch" |
+| Release Year | `year` | TMDB API auto-fill | 4-digit year extracted from release date |
+| Director | `director` | TMDB API auto-fill | First crew member with job "Director" |
+| Runtime (minutes) | `runtime` | TMDB API auto-fill | Integer, in minutes |
+| Genres (Letterboxd) | `genres` | TMDB API auto-fill | Comma-separated list of genre names |
+| Rating | `rating` | Manual user input | Integer 1–10 |
+| Actors | `actors` | TMDB API auto-fill | Top 10 billed cast members, comma-separated |
 
 ---
 
