@@ -477,7 +477,7 @@
   <!-- ── HEADER ─────────────────────────────────────────── -->
   <header>
     <h1><span style="color:#c04444;">C</span><span style="color:#c06a30;">i</span><span style="color:#b8922a;">n</span><span style="color:#3d8a5a;">e</span><span style="color:#268a7a;">m</span><span style="color:#3d5a9e;">a</span>nalysis</h1>
-    <p class="header-sub">A live dashboard to visualize 2026 movie-watching data</p>
+    <p class="header-sub">A live dashboard to visualize your 2026 movie-watching data</p>
   </header>
 
   <!-- ── MAIN ───────────────────────────────────────────── -->
@@ -485,7 +485,7 @@
 
     <div id="loading"><div class="spinner"></div><br>Loading...</div>
     <div id="error-msg">
-      ⚠️ Could not load sheet data. Please check:<br>
+      The data isn't loading, idiot. Please check:<br>
       • The sheet is published to the web as CSV<br>
       • The URL is pasted correctly in SHEET_CSV_URL<br>
       • You are connected to the internet
@@ -519,10 +519,10 @@
             </div>
             <div class="stat-card">
               <div class="stat-value" id="stat-watchage">—</div>
-              <div class="stat-label">Movie Watching Age
+              <div class="stat-label">Cinematic Age
                 <span class="tooltip-wrap">
                   <span class="tooltip-trigger">?</span>
-                  <span class="tooltip-box">An expression of how old your taste in movies would suggest you are. It weighs the release years of movies you watched against your ratings.</span>
+                  <span class="tooltip-box">The age that your taste in movies would suggest you are. It works by calculating a rating-weighted average release year.</span>
                 </span>
               </div>
             </div>
@@ -572,7 +572,7 @@
       <div>
         <p class="section-title" onclick="toggleSection(this)">
           <span class="section-chevron material-symbols-outlined collapsed">expand_circle_down</span>
-          Top Movies of the Year
+          Top 20 Movies of the Year
         </p>
         <div class="section-body collapsed">
           <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
@@ -1107,11 +1107,18 @@
     document.getElementById('stat-watchtime').textContent = `${days}d ${hours}h ${mins}m`;
     document.getElementById('stat-weeklyavg').textContent = (rows.length / weeksSinceStart).toFixed(1);
 
-    const watchAgeData        = rows.filter(r => r[COL.year] && r[COL.rating] && !isNaN(parseInt(r[COL.year])) && !isNaN(parseFloat(r[COL.rating])));
-    const watchAgeWeightedSum = watchAgeData.reduce((sum, r) => sum + (2046 - parseInt(r[COL.year])) * parseFloat(r[COL.rating]), 0);
-    const watchAgeRatingSum   = watchAgeData.reduce((sum, r) => sum + parseFloat(r[COL.rating]), 0);
-    const watchAge            = watchAgeRatingSum > 0 ? Math.round(watchAgeWeightedSum / watchAgeRatingSum) : null;
-    document.getElementById('stat-watchage').textContent = watchAge !== null ? `${watchAge}` : '—';
+    const CINEMATIC_FORMATIVE_AGE = 21;
+    const cinematicData = rows.filter(r =>
+      r[COL.year] && r[COL.rating] &&
+      !isNaN(parseInt(r[COL.year])) &&
+      !isNaN(parseFloat(r[COL.rating]))
+    );
+    const cinematicRatingSum   = cinematicData.reduce((sum, r) => sum + parseFloat(r[COL.rating]), 0);
+    const cinematicWeightedSum = cinematicData.reduce((sum, r) => sum + parseFloat(r[COL.rating]) * parseInt(r[COL.year]), 0);
+    const cinematicWeightedYear = cinematicRatingSum > 0 ? cinematicWeightedSum / cinematicRatingSum : null;
+    const cinematicBirthYear    = cinematicWeightedYear !== null ? Math.round(cinematicWeightedYear - CINEMATIC_FORMATIVE_AGE) : null;
+    const cinematicAge          = cinematicBirthYear !== null ? new Date().getFullYear() - cinematicBirthYear : null;
+    document.getElementById('stat-watchage').textContent = cinematicAge !== null ? `${cinematicAge}` : '—';
 
     const watchDates = [...new Set(
       rows
@@ -1468,6 +1475,16 @@
     const scatterData = rows
       .filter(r => r[COL.runtime] && r[COL.rating] && !isNaN(parseInt(r[COL.runtime])) && !isNaN(parseFloat(r[COL.rating])))
       .map(r => ({ x: parseInt(r[COL.runtime]), y: parseFloat(r[COL.rating]), title: r[COL.title] }));
+    // Trendline (least squares linear regression)
+    const scatterN  = scatterData.length;
+    const sumX      = scatterData.reduce((s, p) => s + p.x, 0);
+    const sumY      = scatterData.reduce((s, p) => s + p.y, 0);
+    const sumXY     = scatterData.reduce((s, p) => s + p.x * p.y, 0);
+    const sumX2     = scatterData.reduce((s, p) => s + p.x * p.x, 0);
+    const trendSlope     = (scatterN * sumXY - sumX * sumY) / (scatterN * sumX2 - sumX * sumX);
+    const trendIntercept = (sumY - trendSlope * sumX) / scatterN;
+    const trendMinX = Math.min(...scatterData.map(p => p.x));
+    const trendMaxX = Math.max(...scatterData.map(p => p.x));
     new Chart(document.getElementById('chart-scatter'), {
       type: 'scatter',
       data: {
@@ -1489,6 +1506,20 @@
             callbacks: {
               title: () => '',
               label: ctx => ` ${ctx.raw.title} — ${ctx.raw.x} min, ${ctx.raw.y}/10`
+            }
+          },
+          annotation: {
+            annotations: {
+              trendLine: {
+                type: 'line',
+                xMin: trendMinX,
+                xMax: trendMaxX,
+                yMin: trendSlope * trendMinX + trendIntercept,
+                yMax: trendSlope * trendMaxX + trendIntercept,
+                borderColor: '#a7a7a7',
+                borderWidth: 1,
+                borderDash: [3, 3],
+              }
             }
           }
         },
