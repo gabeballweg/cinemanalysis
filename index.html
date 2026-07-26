@@ -651,7 +651,7 @@
                 <span style="display:inline-flex; align-items:center;">Top Rated Genres
                   <span class="tooltip-wrap">
                     <span class="tooltip-trigger">?</span>
-                    <span class="tooltip-box">Single: a genre must be watched at least 3 times. Combos: a genre pairing must be watched at least 2 times. Genre data sourced from TMDB.</span>
+                    <span class="tooltip-box">Single genres and combos must be watched at least 3 times to be eligible. Genre data sourced from TMDB.</span>
                   </span>
                 </span>
                 <span style="display:flex; gap:0;">
@@ -1272,7 +1272,7 @@
       }
     });
     const topCombinedGenres = Object.entries(subgenreRatings)
-      .filter(([, { count }]) => count >= 2)
+      .filter(([, { count }]) => count >= 3)
       .map(([name, { total, count }]) => [name, (total / count).toFixed(1)])
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10);
@@ -1636,7 +1636,7 @@
     });
 
     const punchContainer = document.getElementById('punch-card');
-    const startYear = 1960;
+    const startYear = 1950;
     const endYear   = 2026;
 
     const sharedTooltip = document.createElement('div');
