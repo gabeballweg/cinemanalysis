@@ -60,6 +60,33 @@
       text-transform: uppercase;
     }
 
+    /* ── YEAR PICKER ──────────────────────────────────── */
+    .year-picker {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin-top: 18px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .year-picker select {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 8px 12px;
+      cursor: pointer;
+      outline: none;
+    }
+
     /* ── LAYOUT ───────────────────────────────────────── */
     main {
       max-width: 1300px;
@@ -167,7 +194,7 @@
       height: 500px;
     }
 
-    /* ── LOADING & ERROR ──────────────────────────────── */
+    /* ── LOADING, ERROR & EMPTY STATE ─────────────────── */
     #loading {
       display: none;
       text-align: center;
@@ -203,6 +230,20 @@
       padding: 24px 28px;
       font-family: 'Inter', sans-serif;
       font-size: 0.85rem;
+      line-height: 1.8;
+    }
+
+    #empty-state {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 4px;
+      padding: 48px 28px;
+      margin-top: 36px;
+      text-align: center;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
       line-height: 1.8;
     }
 
@@ -477,7 +518,11 @@
   <!-- ── HEADER ─────────────────────────────────────────── -->
   <header>
     <h1><span style="color:#c04444;">C</span><span style="color:#c06a30;">i</span><span style="color:#b8922a;">n</span><span style="color:#3d8a5a;">e</span><span style="color:#268a7a;">m</span><span style="color:#3d5a9e;">a</span>nalysis</h1>
-    <p class="header-sub">A live dashboard to visualize your 2026 movie-watching data</p>
+    <p class="header-sub" id="header-sub">A live dashboard to visualize movie-watching data</p>
+    <div class="year-picker" id="year-picker">
+      <label for="filter-year">Viewing</label>
+      <select id="filter-year" onchange="onYearChange(this.value)"></select>
+    </div>
   </header>
 
   <!-- ── MAIN ───────────────────────────────────────────── -->
@@ -492,6 +537,10 @@
     </div>
 
     <div id="dashboard" style="display:none">
+
+      <div id="empty-state"></div>
+
+      <div id="dashboard-body">
 
       <!-- THE BIG PICTURE -->
       <div>
@@ -568,11 +617,11 @@
         </div>
       </div>
 
-      <!-- TOP MOVIES OF THE YEAR -->
+      <!-- TOP MOVIES -->
       <div>
         <p class="section-title" onclick="toggleSection(this)">
           <span class="section-chevron material-symbols-outlined collapsed">expand_circle_down</span>
-          Top 20 Movies of the Year
+          <span id="top20-title">Top 20 Movies</span>
         </p>
         <div class="section-body collapsed">
           <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
@@ -714,7 +763,7 @@
                 <span style="display:inline-flex; align-items:center;">Most Watched Actors
                   <span class="tooltip-wrap">
                     <span class="tooltip-trigger">?</span>
-                    <span class="tooltip-box">The first ten billed actors for each movie are counted. Actor data sourced from TMDB.</span>
+                    <span class="tooltip-box">The first ten billed actors for each movie are counted. An actor must have at least 2 movies to appear in Watches. Actor data sourced from TMDB.</span>
                   </span>
                 </span>
                 <span style="display:flex; gap:0;">
@@ -852,7 +901,7 @@
               <p class="chart-title">Release Year Punch Card
                 <span class="tooltip-wrap">
                   <span class="tooltip-trigger">?</span>
-                  <span class="tooltip-box">Each cell represents a year from 1960 to 2026. Filled cells indicate years where at least one movie has been watched. Hover for details.</span>
+                  <span class="tooltip-box">Each cell represents a movie release year. Filled cells indicate years where at least one movie has been watched. Hover for details.</span>
                 </span>
               </p>
               <div id="punch-card"></div>
@@ -878,6 +927,7 @@
         </div>
       </div>
 
+      </div><!-- /#dashboard-body -->
     </div><!-- /#dashboard -->
   </main>
 
@@ -889,7 +939,7 @@
   const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdPMDM_QnyJp9fDZuITxCm2REcl-o0JrPfUuw38E0WmcSuT2KW0x5Ow2gs3SGCcXTKR7SDvEr3GKiz/pub?gid=629117052&single=true&output=csv";
 
   const COL = {
-    timestamp:    "Timestamp",
+    timestamp:    "Timestamp",   // form submission time — NOT used for any date logic
     title:        "Movie Title",
     dateWatched:  "Date Watched",
     source:       "Source",
@@ -907,6 +957,8 @@
     "#c04444", "#268a7a", "#c45a7a", "#b8922a",
     "#6a3d9e", "#3d5a9e", "#c06a30", "#3d8a5a"
   ];
+
+  const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   // ── CHART DEFAULTS ───────────────────────────────────────
   Chart.defaults.font.family = "'Inter', sans-serif";
@@ -929,6 +981,84 @@
     }
   };
 
+  // Draws "Not enough data yet" on a chart whose current dataset is empty
+  const emptyMessagePlugin = {
+    id: 'emptyMessage',
+    afterDraw(chart) {
+      if (chart.data.datasets.some(ds => ds.data.length)) return;
+      const { ctx, chartArea } = chart;
+      if (!chartArea) return;
+      ctx.save();
+      ctx.fillStyle = '#a7a7a7';
+      ctx.font = "13px 'Inter', sans-serif";
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Not enough data yet', (chartArea.left + chartArea.right) / 2, (chartArea.top + chartArea.bottom) / 2);
+      ctx.restore();
+    }
+  };
+
+  // ── STATE ────────────────────────────────────────────────
+  let ALL_ROWS        = [];       // every row from the sheet, with _date/_year/_day/_idx attached
+  let AVAILABLE_YEARS = [];       // years that can be selected (descending)
+  let selectedYear    = null;     // 'all' or a number
+  const charts        = [];       // every live Chart instance, so we can destroy them on re-render
+
+  // One shared tooltip element for the punch card
+  const sharedTooltip = document.createElement('div');
+  sharedTooltip.className = 'punch-tooltip';
+  document.body.appendChild(sharedTooltip);
+
+  // ── DATE HELPERS ─────────────────────────────────────────
+  // Parses "Date Watched" into a LOCAL calendar date (no UTC shifting).
+  // Accepts YYYY-MM-DD and M/D/YYYY (US order), with or without a time after it.
+  function parseWatchDate(raw) {
+    if (!raw) return null;
+    const s = String(raw).trim();
+    let y, mo, d, m;
+
+    if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) {
+      y = +m[1]; mo = +m[2]; d = +m[3];
+    } else if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/))) {
+      mo = +m[1]; d = +m[2]; y = +m[3];
+    } else {
+      const t = new Date(s);
+      if (isNaN(t)) return null;
+      y = t.getFullYear(); mo = t.getMonth() + 1; d = t.getDate();
+    }
+
+    const date = new Date(y, mo - 1, d);
+    // Reject impossible dates like 2/31 that JS would silently roll over
+    if (date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) return null;
+    return date;
+  }
+
+  // Whole-day number (days since 1970-01-01) — immune to DST and timezone shifts
+  function dayNumOf(date) {
+    return Math.round(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
+  }
+
+  function formatDayNum(n) {
+    return new Date(n * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  }
+
+  // Attaches parsed date fields to each row. Watches are assigned to years by Date Watched only.
+  function prepareRows(rows) {
+    let undated = 0;
+    rows.forEach((r, i) => {
+      r._idx  = i;
+      const d = parseWatchDate(r[COL.dateWatched]);
+      r._date = d;
+      r._year = d ? d.getFullYear() : null;
+      r._day  = d ? dayNumOf(d) : null;
+      if (!d) undated++;
+    });
+    if (undated) {
+      console.warn(`Cinemanalysis: ${undated} row(s) have a missing or unreadable "Date Watched". They only appear under "All Time".`);
+    }
+    return rows;
+  }
+
   // ── HELPERS ──────────────────────────────────────────────
   function countBy(rows, fn) {
     const c = {};
@@ -943,8 +1073,18 @@
     return Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n);
   }
 
+  // Unique key per movie. Title alone would merge remakes / same-name films (e.g. Dune 1984 vs 2021).
+  function movieKey(r) {
+    return `${r[COL.title]}|${r[COL.year] || ''}`;
+  }
+
+  function track(chart) {
+    charts.push(chart);
+    return chart;
+  }
+
   function makeChart(id, type, labels, data, extra = {}) {
-    return new Chart(document.getElementById(id), {
+    return track(new Chart(document.getElementById(id), {
       type,
       data: {
         labels,
@@ -957,11 +1097,12 @@
         }]
       },
       options: { ...baseOpts, ...extra }
-    });
+    }));
   }
 
   function makeRankedList(listId, items, rightLabelFn) {
     const list = document.getElementById(listId);
+    list.innerHTML = '';
     items.forEach(([name, ...rest], i) => {
       const rightLabel = rightLabelFn(name, ...rest);
       const pct = Math.round((parseFloat(rest[0]) / 10) * 100);
@@ -1008,9 +1149,9 @@
     return card;
   }
 
-  // Produces a horizontal bar chart and returns a toggler function via the factory below
+  // Produces a horizontal bar chart (starts in "count" mode)
   function makeBarChart(canvasId, chartData) {
-    return new Chart(document.getElementById(canvasId), {
+    return track(new Chart(document.getElementById(canvasId), {
       type: 'bar',
       data: {
         labels: chartData.count.labels,
@@ -1021,6 +1162,7 @@
           borderRadius: 4
         }]
       },
+      plugins: [emptyMessagePlugin],
       options: {
         ...baseOpts,
         indexAxis: 'y',
@@ -1033,7 +1175,7 @@
           y: { grid: { display: false }, ticks: { color: '#e8e8e8', font: { size: 10 } }, border: { color: '#414141' } }
         }
       }
-    });
+    }));
   }
 
   // Factory: returns a toggle function for Watches/Runtime bar charts
@@ -1077,7 +1219,7 @@
           document.getElementById('error-msg').style.display = 'block';
           return;
         }
-        buildDashboard(res.data);
+        initDashboard(res.data);
       },
       error() {
         document.getElementById('loading').style.display = 'none';
@@ -1086,75 +1228,158 @@
     });
   });
 
-  // ── BUILD DASHBOARD ──────────────────────────────────────
-  function buildDashboard(rows) {
+  // One-time setup after the CSV loads: prepare data, build the year picker, pick the starting view
+  function initDashboard(rawRows) {
+    ALL_ROWS = prepareRows(rawRows);
     document.getElementById('dashboard').style.display = 'block';
     document.getElementById('last-updated').textContent = new Date().toLocaleString();
 
-    const rated    = rows.filter(r => r[COL.rating] && !isNaN(+r[COL.rating]));
-    const ratings  = rated.map(r => +r[COL.rating]);
+    // Selectable years = every year with a watch, plus the current calendar year (so it's always there)
+    const currentYear = new Date().getFullYear();
+    const years = new Set(ALL_ROWS.map(r => r._year).filter(Boolean));
+    years.add(currentYear);
+    AVAILABLE_YEARS = [...years].sort((a, b) => b - a);
+
+    const select = document.getElementById('filter-year');
+    select.innerHTML = '';
+    select.appendChild(new Option('All Time', 'all'));
+    AVAILABLE_YEARS.forEach(y => select.appendChild(new Option(String(y), String(y))));
+    document.getElementById('year-picker').style.display = 'inline-flex';
+
+    // Starting view: ?year= from the URL if valid, otherwise the current year
+    const requested = new URLSearchParams(window.location.search).get('year');
+    if (requested === 'all') {
+      selectedYear = 'all';
+    } else if (requested && AVAILABLE_YEARS.includes(parseInt(requested, 10))) {
+      selectedYear = parseInt(requested, 10);
+    } else {
+      selectedYear = currentYear;
+    }
+    select.value = String(selectedYear);
+
+    renderDashboard();
+  }
+
+  function onYearChange(value) {
+    selectedYear = value === 'all' ? 'all' : parseInt(value, 10);
+
+    // Keep the URL in sync so the view can be bookmarked / shared. Some environments
+    // (e.g. file:// in certain browsers) forbid this, so failure is non-fatal.
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('year', String(selectedYear));
+      window.history.replaceState(null, '', url);
+    } catch (e) { /* ignore */ }
+
+    renderDashboard();
+  }
+
+  // ── RENDER (safe to call repeatedly) ─────────────────────
+  function renderDashboard() {
+    // Tear down everything the previous render created
+    charts.forEach(c => c.destroy());
+    charts.length = 0;
+    ['top-genres-list', 'director-rating-list', 'actor-rating-list', 'rewatch-rating-list',
+     'punch-card', 'movie-poster-grid', 'recent-poster-grid'].forEach(id => {
+      document.getElementById(id).innerHTML = '';
+    });
+    sharedTooltip.style.display = 'none';
+
+    const isAll = selectedYear === 'all';
+    const view  = { isAll, year: isAll ? null : selectedYear, label: isAll ? 'All Time' : String(selectedYear) };
+    const rows  = isAll ? ALL_ROWS : ALL_ROWS.filter(r => r._year === selectedYear);
+
+    document.getElementById('header-sub').textContent =
+      `A live dashboard to visualize ${isAll ? 'all-time' : view.year} movie-watching data`;
+    document.getElementById('top20-title').textContent =
+      isAll ? 'Top 20 Movies of All Time' : `Top 20 Movies of ${view.year}`;
+
+    const emptyState = document.getElementById('empty-state');
+    const body       = document.getElementById('dashboard-body');
+    if (!rows.length) {
+      emptyState.textContent = `No movies logged for ${view.label} yet.`;
+      emptyState.style.display = 'block';
+      body.style.display = 'none';
+      return;
+    }
+    emptyState.style.display = 'none';
+    body.style.display = 'block';
+
+    buildDashboard(rows, view);
+  }
+
+  // ── BUILD DASHBOARD (rows are already filtered to the selected view) ──
+  function buildDashboard(rows, view) {
+    const now         = new Date();
+    const currentYear = now.getFullYear();
+
+    const rated     = rows.filter(r => r[COL.rating] && !isNaN(+r[COL.rating]));
+    const ratings   = rated.map(r => +r[COL.rating]);
     const rewatches = rows.filter(r => (r[COL.newOrRewatch] || '').toLowerCase().includes('rewatch'));
 
     // ── STATS ──────────────────────────────────────────────
-    const totalMins       = rows.reduce((sum, r) => sum + (parseInt(r[COL.runtime]) || 0), 0);
-    const days            = Math.floor(totalMins / 1440);
-    const hours           = Math.floor((totalMins % 1440) / 60);
-    const mins            = totalMins % 60;
-    const weeksSinceStart = Math.max(1, (new Date() - new Date('2026-01-01')) / (1000 * 60 * 60 * 24 * 7));
+    const totalMins = rows.reduce((sum, r) => sum + (parseInt(r[COL.runtime]) || 0), 0);
+    const days      = Math.floor(totalMins / 1440);
+    const hours     = Math.floor((totalMins % 1440) / 60);
+    const mins      = totalMins % 60;
+
+    // Weekly average: the span depends on the view.
+    //   All Time      → first watch → today
+    //   Current year  → Jan 1 → today
+    //   Past year     → Jan 1 → Dec 31
+    const todayDay = dayNumOf(now);
+    const datedDays = rows.map(r => r._day).filter(d => d !== null);
+    let startDay, endDay;
+    if (view.isAll) {
+      startDay = datedDays.length ? Math.min(...datedDays) : todayDay;
+      endDay   = datedDays.length ? Math.max(todayDay, ...datedDays) : todayDay;
+    } else {
+      startDay = dayNumOf(new Date(view.year, 0, 1));
+      endDay   = Math.min(todayDay, dayNumOf(new Date(view.year, 11, 31)));
+    }
+    const weeksInRange = Math.max(1, (endDay - startDay + 1) / 7);
 
     document.getElementById('stat-total').textContent     = rows.length;
     document.getElementById('stat-directors').textContent = new Set(rows.map(r => r[COL.director]).filter(Boolean)).size;
     document.getElementById('stat-watchtime').textContent = `${days}d ${hours}h ${mins}m`;
-    document.getElementById('stat-weeklyavg').textContent = (rows.length / weeksSinceStart).toFixed(1);
+    document.getElementById('stat-weeklyavg').textContent = (rows.length / weeksInRange).toFixed(1);
 
+    // Cinematic age is measured as of the selected year (or today for All Time)
     const CINEMATIC_FORMATIVE_AGE = 21;
+    const cinematicRefYear = view.isAll ? currentYear : view.year;
     const cinematicData = rows.filter(r =>
       r[COL.year] && r[COL.rating] &&
       !isNaN(parseInt(r[COL.year])) &&
       !isNaN(parseFloat(r[COL.rating]))
     );
-    const cinematicRatingSum   = cinematicData.reduce((sum, r) => sum + parseFloat(r[COL.rating]), 0);
-    const cinematicWeightedSum = cinematicData.reduce((sum, r) => sum + parseFloat(r[COL.rating]) * parseInt(r[COL.year]), 0);
+    const cinematicRatingSum    = cinematicData.reduce((sum, r) => sum + parseFloat(r[COL.rating]), 0);
+    const cinematicWeightedSum  = cinematicData.reduce((sum, r) => sum + parseFloat(r[COL.rating]) * parseInt(r[COL.year]), 0);
     const cinematicWeightedYear = cinematicRatingSum > 0 ? cinematicWeightedSum / cinematicRatingSum : null;
     const cinematicBirthYear    = cinematicWeightedYear !== null ? Math.round(cinematicWeightedYear - CINEMATIC_FORMATIVE_AGE) : null;
-    const cinematicAge          = cinematicBirthYear !== null ? new Date().getFullYear() - cinematicBirthYear : null;
+    const cinematicAge          = cinematicBirthYear !== null ? cinematicRefYear - cinematicBirthYear : null;
     document.getElementById('stat-watchage').textContent = cinematicAge !== null ? `${cinematicAge}` : '—';
 
-    const watchDates = [...new Set(
-      rows
-        .map(r => r[COL.dateWatched] || r[COL.timestamp] || '')
-        .filter(Boolean)
-        .map(raw => {
-          const d = new Date(raw);
-          return isNaN(d) ? null : d.toISOString().slice(0, 10);
-        })
-        .filter(Boolean)
-    )].sort();
-
-    let longestStreak = 1, currentStreak = 1;
-    let longestStart  = watchDates[0], longestEnd = watchDates[0];
-    let currentStart  = watchDates[0];
-
-    for (let i = 1; i < watchDates.length; i++) {
-      const prev = new Date(watchDates[i - 1]);
-      const curr = new Date(watchDates[i]);
-      const diff = (curr - prev) / (1000 * 60 * 60 * 24);
-      if (diff === 1) {
-        currentStreak++;
-        if (currentStreak > longestStreak) {
-          longestStreak = currentStreak;
-          longestStart  = currentStart;
-          longestEnd    = watchDates[i];
-        }
+    // Longest streak of consecutive calendar days (within the selected view)
+    const dayNums = [...new Set(datedDays)].sort((a, b) => a - b);
+    let longest = 0, longestStart = null, longestEnd = null;
+    let runStart = null, runLen = 0, prev = null;
+    dayNums.forEach(n => {
+      if (prev !== null && n === prev + 1) {
+        runLen++;
       } else {
-        currentStreak = 1;
-        currentStart  = watchDates[i];
+        runLen = 1;
+        runStart = n;
       }
-    }
+      if (runLen > longest) {
+        longest = runLen;
+        longestStart = runStart;
+        longestEnd = n;
+      }
+      prev = n;
+    });
 
-    const formatDate = d => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    document.getElementById('stat-streak').textContent      = watchDates.length ? `${longestStreak} days` : '—';
-    document.getElementById('tooltip-streak').textContent   = watchDates.length ? `${formatDate(longestStart)} — ${formatDate(longestEnd)}` : '—';
+    document.getElementById('stat-streak').textContent    = longest ? `${longest} ${longest === 1 ? 'day' : 'days'}` : '—';
+    document.getElementById('tooltip-streak').textContent = longest ? `${formatDayNum(longestStart)} — ${formatDayNum(longestEnd)}` : '—';
 
     // ── GENRE CHARTS ──────────────────────────────────────
     const gc = {};
@@ -1173,22 +1398,25 @@
       });
     });
 
+    const genreCountEntries   = sortedEntries(gc, 10);
+    const genreRuntimeEntries = sortedEntries(genreRuntime, 10);
     const genreChartData = {
-      count:   { labels: sortedEntries(gc, 10).map(e => e[0]),           data: sortedEntries(gc, 10).map(e => e[1]) },
-      runtime: { labels: sortedEntries(genreRuntime, 10).map(e => e[0]), data: sortedEntries(genreRuntime, 10).map(e => e[1]) }
+      count:   { labels: genreCountEntries.map(e => e[0]),   data: genreCountEntries.map(e => e[1]) },
+      runtime: { labels: genreRuntimeEntries.map(e => e[0]), data: genreRuntimeEntries.map(e => e[1]) }
     };
 
     const genreChart = makeBarChart('chart-genre-combined', genreChartData);
     window.toggleGenreChart = makeChartToggler(genreChart, genreChartData, 'genre-toggle-count', 'genre-toggle-runtime');
+    window.toggleGenreChart('count');   // resets the buttons to match the freshly built chart
 
     // ── ACTOR CHARTS ──────────────────────────────────────
     const seenActorTitles = {};
     rows.forEach(r => {
-      const title = r[COL.title];
-      if (!title) return;
+      if (!r[COL.title]) return;
+      const key = movieKey(r);
       (r[COL.actors] || '').split(',').map(a => a.trim()).filter(Boolean).forEach(a => {
         if (!seenActorTitles[a]) seenActorTitles[a] = new Set();
-        seenActorTitles[a].add(title);
+        seenActorTitles[a].add(key);
       });
     });
     const ac = {};
@@ -1203,23 +1431,26 @@
       });
     });
 
+    const actorCountEntries   = sortedEntries(Object.fromEntries(Object.entries(ac).filter(([, v]) => v >= 2)), 10);
+    const actorRuntimeEntries = sortedEntries(actorRuntime, 10);
     const actorChartData = {
-      count:   { labels: sortedEntries(Object.fromEntries(Object.entries(ac).filter(([, v]) => v >= 2)), 10).map(e => e[0]), data: sortedEntries(Object.fromEntries(Object.entries(ac).filter(([, v]) => v >= 2)), 10).map(e => e[1]) },
-      runtime: { labels: sortedEntries(actorRuntime, 10).map(e => e[0]), data: sortedEntries(actorRuntime, 10).map(e => e[1]) }
+      count:   { labels: actorCountEntries.map(e => e[0]),   data: actorCountEntries.map(e => e[1]) },
+      runtime: { labels: actorRuntimeEntries.map(e => e[0]), data: actorRuntimeEntries.map(e => e[1]) }
     };
 
     const actorChart = makeBarChart('chart-actors-combined', actorChartData);
     window.toggleActorChart = makeChartToggler(actorChart, actorChartData, 'actor-toggle-count', 'actor-toggle-runtime');
+    window.toggleActorChart('count');
 
     // ── HIGHEST RATED ACTORS ──────────────────────────────
     const actorFilms = {};
     rows.forEach(r => {
       const rating = parseFloat(r[COL.rating]);
-      const title  = r[COL.title];
-      if (!rating || !title) return;
+      if (!rating || !r[COL.title]) return;
+      const key = movieKey(r);
       (r[COL.actors] || '').split(',').map(a => a.trim()).filter(Boolean).forEach(a => {
         if (!actorFilms[a]) actorFilms[a] = {};
-        if (!actorFilms[a][title] || rating > actorFilms[a][title]) actorFilms[a][title] = rating;
+        if (!actorFilms[a][key] || rating > actorFilms[a][key]) actorFilms[a][key] = rating;
       });
     });
     const actorRatingMap = {};
@@ -1296,16 +1527,15 @@
       document.getElementById('genre-rating-toggle-combined').classList.toggle('inactive', !isCombined);
     };
 
-    renderGenreRatingList(topSingleGenres);
+    window.toggleGenreRatingList('single');
 
     // ── DIRECTOR CHARTS ───────────────────────────────────
     const seenDirectorTitles = {};
     rows.forEach(r => {
-      const title    = r[COL.title];
       const director = r[COL.director];
-      if (!title || !director) return;
+      if (!r[COL.title] || !director) return;
       if (!seenDirectorTitles[director]) seenDirectorTitles[director] = new Set();
-      seenDirectorTitles[director].add(title);
+      seenDirectorTitles[director].add(movieKey(r));
     });
     const dc2 = {};
     Object.entries(seenDirectorTitles).forEach(([director, titles]) => { dc2[director] = titles.size; });
@@ -1318,23 +1548,26 @@
       directorRuntime[director] = (directorRuntime[director] || 0) + runtime;
     });
 
+    const directorCountEntries   = sortedEntries(Object.fromEntries(Object.entries(dc2).filter(([, v]) => v >= 2)), 10);
+    const directorRuntimeEntries = sortedEntries(directorRuntime, 10);
     const directorChartData = {
-      count:   { labels: sortedEntries(Object.fromEntries(Object.entries(dc2).filter(([, v]) => v >= 2)), 10).map(e => e[0]), data: sortedEntries(Object.fromEntries(Object.entries(dc2).filter(([, v]) => v >= 2)), 10).map(e => e[1]) },
-      runtime: { labels: sortedEntries(directorRuntime, 10).map(e => e[0]), data: sortedEntries(directorRuntime, 10).map(e => e[1]) }
+      count:   { labels: directorCountEntries.map(e => e[0]),   data: directorCountEntries.map(e => e[1]) },
+      runtime: { labels: directorRuntimeEntries.map(e => e[0]), data: directorRuntimeEntries.map(e => e[1]) }
     };
 
     const directorChart = makeBarChart('chart-directors-combined', directorChartData);
     window.toggleDirectorChart = makeChartToggler(directorChart, directorChartData, 'director-toggle-count', 'director-toggle-runtime');
+    window.toggleDirectorChart('count');
 
     // ── HIGHEST RATED DIRECTORS ───────────────────────────
     const directorFilms = {};
     rows.forEach(r => {
       const rating   = parseFloat(r[COL.rating]);
       const director = r[COL.director];
-      const title    = r[COL.title];
-      if (!rating || !director || !title) return;
+      if (!rating || !director || !r[COL.title]) return;
+      const key = movieKey(r);
       if (!directorFilms[director]) directorFilms[director] = {};
-      if (!directorFilms[director][title] || rating > directorFilms[director][title]) directorFilms[director][title] = rating;
+      if (!directorFilms[director][key] || rating > directorFilms[director][key]) directorFilms[director][key] = rating;
     });
     const directorRatingMap = {};
     Object.entries(directorFilms).forEach(([director, films]) => {
@@ -1357,7 +1590,7 @@
     // ── SOURCE CHARTS ─────────────────────────────────────
     const se          = sortedEntries(countBy(rows, r => r[COL.source]));
     const sourceTotal = se.reduce((a, b) => a + b[1], 0);
-    new Chart(document.getElementById('chart-source'), {
+    track(new Chart(document.getElementById('chart-source'), {
       type: 'doughnut',
       data: {
         labels: se.map(e => e[0]),
@@ -1381,7 +1614,7 @@
           }
         }
       }
-    });
+    }));
 
     const sourceRatings = {};
     rows.forEach(r => {
@@ -1406,7 +1639,7 @@
     // ── REWATCH CHARTS ────────────────────────────────────
     const newCount     = rows.filter(r => (r[COL.newOrRewatch] || '').toLowerCase().includes('new')).length;
     const rewatchTotal = newCount + rewatches.length;
-    new Chart(document.getElementById('chart-rewatch'), {
+    track(new Chart(document.getElementById('chart-rewatch'), {
       type: 'pie',
       data: {
         labels: ['First Watch', 'Rewatch'],
@@ -1430,7 +1663,7 @@
           }
         }
       }
-    });
+    }));
 
     const newRatings     = rows.filter(r => (r[COL.newOrRewatch] || '').toLowerCase().includes('new') && !isNaN(parseFloat(r[COL.rating]))).map(r => parseFloat(r[COL.rating]));
     const rewatchRatings = rows.filter(r => (r[COL.newOrRewatch] || '').toLowerCase().includes('rewatch') && !isNaN(parseFloat(r[COL.rating]))).map(r => parseFloat(r[COL.rating]));
@@ -1441,30 +1674,32 @@
     // ── RATING DISTRIBUTION ───────────────────────────────
     const b = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0 };
     ratings.forEach(r => { const k = Math.round(r); if (b[k] !== undefined) b[k]++; });
-    const avgRating = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null;
-    makeChart('chart-ratings', 'bar', Object.keys(b), Object.values(b), {
-      plugins: {
-        legend: { display: false },
-        annotation: {
-          annotations: {
-            avgLine: {
-              type: 'line',
-              xMin: avgRating - 1,
-              xMax: avgRating - 1,
-              borderColor: '#a7a7a7',
-              borderWidth: 1,
-              borderDash: [4, 4],
-              label: {
-                display: true,
-                content: `Avg: ${avgRating.toFixed(1)}`,
-                color: '#a7a7a7',
-                font: { family: "'Inter', sans-serif", size: 10 },
-                position: 'start'
-              }
+    const avgRating = ratings.length ? ratings.reduce((a, c) => a + c, 0) / ratings.length : null;
+
+    const ratingPlugins = { legend: { display: false } };
+    if (avgRating !== null) {
+      ratingPlugins.annotation = {
+        annotations: {
+          avgLine: {
+            type: 'line',
+            xMin: avgRating - 1,
+            xMax: avgRating - 1,
+            borderColor: '#a7a7a7',
+            borderWidth: 1,
+            borderDash: [4, 4],
+            label: {
+              display: true,
+              content: `Avg: ${avgRating.toFixed(1)}`,
+              color: '#a7a7a7',
+              font: { family: "'Inter', sans-serif", size: 10 },
+              position: 'start'
             }
           }
         }
-      },
+      };
+    }
+    makeChart('chart-ratings', 'bar', Object.keys(b), Object.values(b), {
+      plugins: ratingPlugins,
       scales: {
         x: { grid: { display: false }, title: { display: true, text: 'Rating', color: '#e8e8e8' }, border: { color: '#414141' } },
         y: { grid: { display: false }, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
@@ -1475,17 +1710,34 @@
     const scatterData = rows
       .filter(r => r[COL.runtime] && r[COL.rating] && !isNaN(parseInt(r[COL.runtime])) && !isNaN(parseFloat(r[COL.rating])))
       .map(r => ({ x: parseInt(r[COL.runtime]), y: parseFloat(r[COL.rating]), title: r[COL.title] }));
-    // Trendline (least squares linear regression)
-    const scatterN  = scatterData.length;
-    const sumX      = scatterData.reduce((s, p) => s + p.x, 0);
-    const sumY      = scatterData.reduce((s, p) => s + p.y, 0);
-    const sumXY     = scatterData.reduce((s, p) => s + p.x * p.y, 0);
-    const sumX2     = scatterData.reduce((s, p) => s + p.x * p.x, 0);
-    const trendSlope     = (scatterN * sumXY - sumX * sumY) / (scatterN * sumX2 - sumX * sumX);
-    const trendIntercept = (sumY - trendSlope * sumX) / scatterN;
-    const trendMinX = Math.min(...scatterData.map(p => p.x));
-    const trendMaxX = Math.max(...scatterData.map(p => p.x));
-    new Chart(document.getElementById('chart-scatter'), {
+
+    // Trendline (least squares linear regression) — only drawn when it's mathematically defined
+    const scatterAnnotations = {};
+    const scatterN = scatterData.length;
+    if (scatterN >= 2) {
+      const sumX  = scatterData.reduce((s, p) => s + p.x, 0);
+      const sumY  = scatterData.reduce((s, p) => s + p.y, 0);
+      const sumXY = scatterData.reduce((s, p) => s + p.x * p.y, 0);
+      const sumX2 = scatterData.reduce((s, p) => s + p.x * p.x, 0);
+      const denom = scatterN * sumX2 - sumX * sumX;
+      if (denom !== 0) {
+        const trendSlope     = (scatterN * sumXY - sumX * sumY) / denom;
+        const trendIntercept = (sumY - trendSlope * sumX) / scatterN;
+        const trendMinX = Math.min(...scatterData.map(p => p.x));
+        const trendMaxX = Math.max(...scatterData.map(p => p.x));
+        scatterAnnotations.trendLine = {
+          type: 'line',
+          xMin: trendMinX,
+          xMax: trendMaxX,
+          yMin: trendSlope * trendMinX + trendIntercept,
+          yMax: trendSlope * trendMaxX + trendIntercept,
+          borderColor: '#a7a7a7',
+          borderWidth: 1,
+          borderDash: [3, 3],
+        };
+      }
+    }
+    track(new Chart(document.getElementById('chart-scatter'), {
       type: 'scatter',
       data: {
         datasets: [{
@@ -1508,20 +1760,7 @@
               label: ctx => ` ${ctx.raw.title} — ${ctx.raw.x} min, ${ctx.raw.y}/10`
             }
           },
-          annotation: {
-            annotations: {
-              trendLine: {
-                type: 'line',
-                xMin: trendMinX,
-                xMax: trendMaxX,
-                yMin: trendSlope * trendMinX + trendIntercept,
-                yMax: trendSlope * trendMaxX + trendIntercept,
-                borderColor: '#a7a7a7',
-                borderWidth: 1,
-                borderDash: [3, 3],
-              }
-            }
-          }
+          annotation: { annotations: scatterAnnotations }
         },
         scales: {
           x: {
@@ -1544,42 +1783,48 @@
           }
         }
       }
-    });
+    }));
 
     // ── VOLUME CHARTS ─────────────────────────────────────
-    const mc = {};
+    // Monthly buckets, keyed as year*12 + monthIndex. Empty months are filled with 0 so gaps are visible.
+    const monthCounts = {};
     rows.forEach(r => {
-      const raw = r[COL.dateWatched] || r[COL.timestamp] || '';
-      if (!raw) return;
-      const d = new Date(raw);
-      if (isNaN(d)) return;
-      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      mc[k] = (mc[k] || 0) + 1;
+      if (!r._date) return;
+      const k = r._year * 12 + r._date.getMonth();
+      monthCounts[k] = (monthCounts[k] || 0) + 1;
     });
-    const sm = Object.keys(mc).sort();
-    makeChart(
-      'chart-timeline', 'bar',
-      sm.map(k => { const [y, m] = k.split('-'); return new Date(y, m - 1).toLocaleString('default', { month: 'short', year: 'numeric' }); }),
-      sm.map(k => mc[k]),
-      {
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { display: false }, ticks: { color: '#e8e8e8', maxRotation: 45 }, border: { color: '#414141' } },
-          y: { grid: { display: false }, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
-        }
+    const monthKeys = Object.keys(monthCounts).map(Number);
+    const monthLabels = [];
+    const monthValues = [];
+    if (monthKeys.length) {
+      const nowKey = currentYear * 12 + now.getMonth();
+      let firstKey, lastKey;
+      if (view.isAll) {
+        firstKey = Math.min(...monthKeys);
+        lastKey  = Math.max(nowKey, ...monthKeys);
+      } else {
+        firstKey = view.year * 12;
+        lastKey  = view.year === currentYear ? nowKey : view.year * 12 + 11;
+        lastKey  = Math.max(lastKey, ...monthKeys);   // never hide a month that has data
       }
-    );
-
-    const dayCounts = { Sunday: 0, Monday: 0, Tuesday: 0, Wednesday: 0, Thursday: 0, Friday: 0, Saturday: 0 };
-    rows.forEach(r => {
-      const raw = r[COL.dateWatched] || r[COL.timestamp] || '';
-      if (!raw) return;
-      const d = new Date(raw);
-      if (isNaN(d)) return;
-      const dayName = d.toLocaleString('default', { weekday: 'long' });
-      if (dayCounts[dayName] !== undefined) dayCounts[dayName]++;
+      const labelOpts = view.isAll ? { month: 'short', year: 'numeric' } : { month: 'short' };
+      for (let k = firstKey; k <= lastKey; k++) {
+        monthLabels.push(new Date(Math.floor(k / 12), k % 12, 1).toLocaleString('default', labelOpts));
+        monthValues.push(monthCounts[k] || 0);
+      }
+    }
+    makeChart('chart-timeline', 'bar', monthLabels, monthValues, {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#e8e8e8', maxRotation: 45 }, border: { color: '#414141' } },
+        y: { grid: { display: false }, ticks: { stepSize: 1, color: '#e8e8e8' }, border: { color: '#414141' } }
+      }
     });
-    makeChart('chart-dayofweek', 'bar', Object.keys(dayCounts), Object.values(dayCounts), {
+
+    // Day of week uses getDay() so it works in any browser language
+    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+    rows.forEach(r => { if (r._date) dayCounts[r._date.getDay()]++; });
+    makeChart('chart-dayofweek', 'bar', DAY_NAMES, dayCounts, {
       plugins: { legend: { display: false } },
       scales: {
         x: { grid: { display: false }, ticks: { color: '#e8e8e8' }, border: { color: '#414141' } },
@@ -1594,7 +1839,7 @@
       const d = Math.floor(yr / 10) * 10 + 's';
       dc[d] = (dc[d] || 0) + 1;
     });
-    const de = Object.entries(dc).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+    const de = Object.entries(dc).sort((a, c) => parseInt(a[0]) - parseInt(c[0]));
     makeChart('chart-decade', 'bar', de.map(e => e[0]), de.map(e => e[1]), {
       plugins: { legend: { display: false } },
       scales: {
@@ -1616,7 +1861,7 @@
     });
     const decadeAvgEntries = Object.entries(decadeRatings)
       .map(([name, { total, count }]) => [name, parseFloat((total / count).toFixed(1))])
-      .sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+      .sort((a, c) => parseInt(a[0]) - parseInt(c[0]));
     makeChart('chart-decade-rating', 'bar', decadeAvgEntries.map(e => e[0]), decadeAvgEntries.map(e => e[1]), {
       plugins: { legend: { display: false } },
       scales: {
@@ -1626,6 +1871,19 @@
     });
 
     // ── PUNCH CARD ────────────────────────────────────────
+    // The year RANGE comes from the whole sheet (so the grid doesn't change shape between views);
+    // only the filled-in cells depend on the selected view.
+    const MIN_SANE_YEAR = 1880;
+    const allReleaseYears = ALL_ROWS
+      .map(r => parseInt(r[COL.year]))
+      .filter(y => y >= MIN_SANE_YEAR && y <= currentYear + 5);
+    const startYear = allReleaseYears.length
+      ? Math.floor(Math.min(...allReleaseYears) / 10) * 10
+      : Math.floor(currentYear / 10) * 10;
+    const endYear = allReleaseYears.length
+      ? Math.max(currentYear, ...allReleaseYears)
+      : currentYear;
+
     const punchData = {};
     rows.forEach(r => {
       const yr    = parseInt(r[COL.year]);
@@ -1636,16 +1894,10 @@
     });
 
     const punchContainer = document.getElementById('punch-card');
-    const startYear = 1950;
-    const endYear   = 2026;
-
-    const sharedTooltip = document.createElement('div');
-    sharedTooltip.className = 'punch-tooltip';
-    document.body.appendChild(sharedTooltip);
 
     for (let decade = startYear; decade <= endYear; decade += 10) {
-      const row      = document.createElement('div');
-      row.className  = 'punch-row';
+      const row       = document.createElement('div');
+      row.className   = 'punch-row';
       const cellsWrap = document.createElement('div');
       cellsWrap.className = 'punch-dots';
 
@@ -1674,9 +1926,9 @@
             });
             if (titles.length > 10) {
               const more = document.createElement('div');
-              more.style.color    = 'var(--text-muted)';
+              more.style.color     = 'var(--text-muted)';
               more.style.marginTop = '4px';
-              more.textContent    = `+${titles.length - 10} more`;
+              more.textContent     = `+${titles.length - 10} more`;
               sharedTooltip.appendChild(more);
             }
           } else {
@@ -1699,33 +1951,16 @@
       const cellsInRow = Math.min(decade + 10, endYear + 1) - decade;
       for (let p = cellsInRow; p < 10; p++) {
         const phantom = document.createElement('div');
-        phantom.className         = 'punch-cell';
-        phantom.style.background  = 'transparent';
-        phantom.style.border      = '1px solid transparent';
-        phantom.style.cursor      = 'default';
+        phantom.className           = 'punch-cell';
+        phantom.style.background    = 'transparent';
+        phantom.style.border        = '1px solid transparent';
+        phantom.style.cursor        = 'default';
         phantom.style.pointerEvents = 'none';
         cellsWrap.appendChild(phantom);
       }
 
       row.appendChild(cellsWrap);
       punchContainer.appendChild(row);
-    }
-
-    function positionTooltip(target) {
-      const rect   = target.getBoundingClientRect();
-      const tipW   = sharedTooltip.offsetWidth  || 180;
-      const tipH   = sharedTooltip.offsetHeight || 100;
-      const margin = 8;
-      const vw     = window.innerWidth;
-
-      let top  = rect.top - tipH - margin;
-      if (top < 0) top = rect.bottom + margin;
-
-      let left = rect.left + rect.width / 2 - tipW / 2;
-      left = Math.max(margin, Math.min(left, vw - tipW - margin));
-
-      sharedTooltip.style.top  = `${top}px`;
-      sharedTooltip.style.left = `${left}px`;
     }
 
     // ── MY PERFECT MOVIE ──────────────────────────────────
@@ -1746,13 +1981,14 @@
     // ── POSTER GRIDS ──────────────────────────────────────
     const posterGrid = document.getElementById('movie-poster-grid');
 
+    // Best rating per movie (keyed by title + release year so remakes don't collide)
     const allRatedDeduped = (() => {
       const best = {};
       rated.forEach(r => {
-        const t = r[COL.title];
-        if (!best[t] || +r[COL.rating] > +best[t][COL.rating]) best[t] = r;
+        const k = movieKey(r);
+        if (!best[k] || +r[COL.rating] > +best[k][COL.rating]) best[k] = r;
       });
-      return Object.values(best).sort((a, b) => +b[COL.rating] - +a[COL.rating]);
+      return Object.values(best).sort((a, c) => +c[COL.rating] - +a[COL.rating]);
     })();
 
     function renderPosterGrid(data) {
@@ -1783,16 +2019,17 @@
     };
 
     // ── RECENTLY WATCHED ──────────────────────────────────
+    // Newest Date Watched first; ties go to whichever row was logged later in the sheet
     const recentGrid = document.getElementById('recent-poster-grid');
-
-    const recentMovies = [...rows]
-      .filter(r => r[COL.dateWatched] || r[COL.timestamp])
-      .sort((a, b) => new Date(b[COL.dateWatched] || b[COL.timestamp]) - new Date(a[COL.dateWatched] || a[COL.timestamp]))
+    const recentMovies = rows
+      .filter(r => r._date)
+      .sort((a, c) => (c._day - a._day) || (c._idx - a._idx))
       .slice(0, 6);
 
     recentMovies.forEach(r => recentGrid.appendChild(buildPosterCard(r)));
 
     // ── RECENT STATUS BAR ─────────────────────────────────
+    const bar = document.getElementById('recent-status-bar');
     const recentRated = recentMovies.filter(r => r[COL.rating] && !isNaN(+r[COL.rating]));
     const recentAvg   = recentRated.length
       ? recentRated.reduce((sum, r) => sum + +r[COL.rating], 0) / recentRated.length
@@ -1806,14 +2043,35 @@
       else if (recentAvg < 8.5) { label = 'On A Heater';   bg = '#3d8a5a'; color = 'var(--text)'; }
       else                      { label = 'Going Nuclear'; bg = '#6A3D9E'; color = 'var(--text)'; }
 
-      const bar = document.getElementById('recent-status-bar');
+      bar.style.display    = 'inline-flex';
       bar.style.background = bg;
       bar.style.color      = color;
       bar.innerHTML        = `${label}<span style="font-weight:400;"> - ${recentAvg.toFixed(1)} average rating</span>`;
+    } else {
+      bar.style.display = 'none';
+      bar.innerHTML     = '';
     }
 
     // Initial render — call applyPosterFilters so filter state drives the grid
-    applyPosterFilters();
+    window.applyPosterFilters();
+  }
+
+  // ── PUNCH CARD TOOLTIP POSITIONING ───────────────────────
+  function positionTooltip(target) {
+    const rect   = target.getBoundingClientRect();
+    const tipW   = sharedTooltip.offsetWidth  || 180;
+    const tipH   = sharedTooltip.offsetHeight || 100;
+    const margin = 8;
+    const vw     = window.innerWidth;
+
+    let top  = rect.top - tipH - margin;
+    if (top < 0) top = rect.bottom + margin;
+
+    let left = rect.left + rect.width / 2 - tipW / 2;
+    left = Math.max(margin, Math.min(left, vw - tipW - margin));
+
+    sharedTooltip.style.top  = `${top}px`;
+    sharedTooltip.style.left = `${left}px`;
   }
 
   // ── SECTION COLLAPSING ───────────────────────────────────
